@@ -5,7 +5,6 @@ $letter = $env:HOMEDRIVE[0]
 # Defrag
 Write-Host "Defragmenting disk..."
 Optimize-Volume -DriveLetter $letter -ReTrim -Defrag -SlabConsolidate -TierOptimize -NormalPriority
-Restart-Computer
 
 Write-Host "Repartioning disk..."
 $linuxsize = $linux_system_size + $linux_home_size
@@ -42,4 +41,13 @@ VBoxManage internalcommands createrawvmdk -filename "C:\linux\rawparts.vmdk" -ra
 $parttype = (get-disk -disknumber $disk).partitionstyle
 #TODO: download or copy *.efi file to C:\linux
 #TODO: use bcdedit commands to add menu item, set timeout value.
-
+#install easybcd, easyuefi for experimentation
+#bcdedit /export c:\linux\bcd.bak
+#bcdedit /enum firmware
+#bcdedit /create /c "Linux Mint" /application ?????
+#Returns a value for {ID}
+#bcdedit /set {ID} device partition=c:
+#bcdedit {ID} PATH \linux\shimx64.efi (or grup4bcd.img)
+#bcdedit /displayorder {ID} /addlast
+#bcdedit /set {bootmgr} path \EFI\ubuntu\shimx64.efi
+#bcdedit /set {bootmgr} path C:\linux\shimx64.efi

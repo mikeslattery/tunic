@@ -32,3 +32,8 @@ Clear-WindowsDiagnosticData -Force
 #TODO: HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\CrashControl = 0
 #TODO: HKEY_CURRENT_USER\Software\Microsoft\Windows\Windows Error Reporting, set Disabled to REG_DWORD equal 1
 
+# Defrag
+Write-Host "Defragmenting disk..."
+Optimize-Volume -DriveLetter $letter -ReTrim -Defrag -SlabConsolidate -TierOptimize -NormalPriority
+Restart-Computer
+

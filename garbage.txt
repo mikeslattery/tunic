@@ -10,15 +10,26 @@ architecture:
     bundle as exe with elevated privs
     monkeypatching by plugins to fix issues.
     Automated testing
+        Can't really do this until we have pre-MVP
         Test hardware uses HDD
+        Triggered by push to master
         Everything will be set up to use an http proxy that will cache downloads.
-        USB drive.  default boot
-        USB restores clone backup.
-        Waits for network trigger to start install.
-        Reboot to Windows.  Windows auto start script.
-        Auto start script downloads current code and runs it with default settings.
-        Any error or warning is recorded.
-        After final boot to linux, reboot to USB drive.
+        Start with full drive image backup, and separate C: partition image backup.
+        Create report of config of partitions and bootmgr
+        Windows script runs on boot.
+            Waits for network trigger to start install.
+            Auto start script downloads current code and runs it with default settings.
+            Any error or warning is recorded.
+            At end, reboot to Linux
+        Linux post-install script
+            chroot into tmpfs file system
+            repartition C: + linux back to original
+            recover backup image to partition
+            Inject auto-run script
+            Change boot manager to original
+            verify partiion table and bootmgr is idential to start
+            reboot
+
 documentation:
     plugins: how to write a plugin, include external repos.
     contribute: rules, licensing, todo, roadmap
