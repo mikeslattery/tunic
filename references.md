@@ -7,6 +7,9 @@
 * https://www.howtogeek.com/167984/how-to-create-and-restore-system-image-backups-on-windows-8.1/
 * https://en.wikipedia.org/wiki/Comparison_of_disk_cloning_software
 * http://odin-win.sourceforge.net/
+* http://www.invoke-ir.com/2015/06/ontheforensictrail-part3.html
+* https://devblogs.microsoft.com/scripting/use-powershell-to-interact-with-the-windows-api-part-1/
+* https://code.msdn.microsoft.com/windowsapps/CCS-LABS-C-Low-Level-Disk-91676ca9
 
 ### Cleanup
 
@@ -27,13 +30,18 @@
 
 ### Boot Menu
 
+#### MBR
+
+* https://www.linuxquestions.org/questions/linux-general-1/using-bcdedit-to-configure-a-multiboot-system-and-add-linux-4175644308/
+* https://wiki.archlinux.org/index.php/Dual_boot_with_Windows/SafeBoot
+
+#### EFI
+
 * https://docs.microsoft.com/en-us/windows-hardware/manufacture/desktop/windows-and-gpt-faq
 * https://wiki.archlinux.org/index.php/EFI_system_partition
 * https://forums.linuxmint.com/viewtopic.php?t=300030
 * https://askubuntu.com/questions/342365/what-is-the-difference-between-grubx64-and-shimx64
-* https://www.linuxquestions.org/questions/linux-general-1/using-bcdedit-to-configure-a-multiboot-system-and-add-linux-4175644308/
 * https://docs.microsoft.com/en-us/windows-hardware/manufacture/desktop/bcd-system-store-settings-for-uefi
 * http://www.rodsbooks.com/linux-uefi/
 * https://neosmart.net/wiki/bcdedit/
-* https://wiki.archlinux.org/index.php/Dual_boot_with_Windows/SafeBoot
 
