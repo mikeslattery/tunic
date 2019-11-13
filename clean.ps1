@@ -1,20 +1,23 @@
 # Turn off swap
 Write-Host "Cleaning file system..."
 
+$letter = $env:HOMEDRIVE[0]
+chkdsk "${letter}:"
+
 # Turn off hibernation and fast start
-REG ADD "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Power" /V HiberbootEnabled /T REG_dWORD /D 0 /F
+REG ADD "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Power" /V HiberbootEnabled /T REG_DWORD /D 0 /F
 powercfg.exe /h off
 
 # Diable swap
-$computersys = Get-WmiObject Win32_ComputerSystem -EnableAllPrivileges;
-$computersys.AutomaticManagedPagefile = $False;
-$computersys.Put();
+$computersys = Get-WmiObject Win32_ComputerSystem -EnableAllPrivileges
+$computersys.AutomaticManagedPagefile = $False
+$computersys.Put()
 #TODO: failed: wmic pagefile delete
 
-$pagefile = Get-WmiObject -Query "Select * From Win32_PageFileSetting Where Name like '%pagefile.sys'";
-$pagefile.InitialSize = 0;
-$pagefile.MaximumSize = 0;
-$pagefile.Put();
+$pagefile = Get-WmiObject -Query "Select * From Win32_PageFileSetting Where Name like '%pagefile.sys'"
+$pagefile.InitialSize = 0
+$pagefile.MaximumSize = 0
+$pagefile.Put()
 #ALT: delete or move pagefile.sys
 #ALT: wmic computersystem set AutomaticManagedPagefile=False
 #ALT: wmic pagefileset where name="C:\\pagefile.sys" delete
@@ -29,8 +32,8 @@ Dism /Online /Cleanup-Image /StartComponentCleanup /ResetBase
 Disable-WindowsErrorReporting
 Clear-WindowsDiagnosticData -Force
 
-#TODO: HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\CrashControl = 0
-#TODO: HKEY_CURRENT_USER\Software\Microsoft\Windows\Windows Error Reporting, set Disabled to REG_DWORD equal 1
+#TODO: REG ADD "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\CrashControl" /V CrashDumpEnabled /T REG_DWORD /D 0 /F
+#TODO: REG ADD "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\Windows Error Reporting" /v Disabled /T REG_DWORD /D 1 /F
 
 # Defrag
 Write-Host "Defragmenting disk..."

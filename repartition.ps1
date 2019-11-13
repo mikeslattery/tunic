@@ -9,12 +9,24 @@ $letter = $env:HOMEDRIVE[0]
 
 # TODO: logging functions: format-list *, append, timestamp
 
-# Defrag
 Write-Host "Defragmenting disk..."
 Optimize-Volume -DriveLetter $letter -ReTrim -Defrag -SlabConsolidate -TierOptimize -NormalPriority
 
+$efi = (ls function:[d-z]: -n | ?{ !(test-path $_) } | random)
+#TODO: this line failed first time I ran it:
+mountvol.exe "$efi" /s
+Compress-Archive -Path "$efi" -DestinationPath "C:\linux\efi.zip"
+mountvol.exe "$efi" /d
+
 Write-Host "Backing up..."
-Compress-Archive -Path ((Get-Partition | ? IsSystem).AccessPaths[0]) -DestinationPath "C:\linux\efi.zip"
+$efi = (ls function:[d-z]: -n | ?{ !(test-path $_) } | random)
+#TODO: this line failed first time I ran it:
+mountvol $efi /s
+#TODO: ex.txt with BCD,BCD.LOG
+xcopy e: c:\linux\efi /s /e /exclude:c:\linux\ex.txt
+#TODO: Compress-Archive -Path "$efi" -DestinationPath "C:\linux\efi.zip"
+#TODO: cp -r /e /c/linux/efi
+mountvol $efi /d
 bcdedit /export c:\linux\bcd.bak
 #TODO: read MBR
 Write-Host "INITIAL" | Out-File -FilePath c:\linux\out.log -Append
