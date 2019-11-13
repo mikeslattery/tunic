@@ -21,12 +21,16 @@
 * https://windowsreport.com/delete-system-error-memory-dump-files-in-windows/
 * https://stackoverflow.com/questions/6035112/disable-application-crash-dumps-on-windows-7
 
-## Install Linux
+### Install Linux
 
 * https://phoenixnap.dl.sourceforge.net/project/osboxes/v/vb/31-Lx-M-t/19.2/Cinnamon/19-2C-64bit.7z
 * https://www.groovypost.com/howto/dual-boot-windows-10-linux/
 * https://www.dell.com/support/article/us/en/04/sln151664/how-to-install-ubuntu-linux-on-your-dell-pc?lang=en
 * https://tuxboot.org/
+
+### Testing and Support
+* https://www.microsoft.com/en-us/download/details.aspx?id=8002 - XP
+* https://www.makeuseof.com/tag/download-windows-xp-for-free-and-legally-straight-from-microsoft-si/
 
 ### Boot Menu
 
@@ -44,4 +48,4 @@
 * https://docs.microsoft.com/en-us/windows-hardware/manufacture/desktop/bcd-system-store-settings-for-uefi
 * http://www.rodsbooks.com/linux-uefi/
 * https://neosmart.net/wiki/bcdedit/
-
+* https://askubuntu.com/questions/831216/how-can-i-reinstall-grub-to-the-efi-partition

@@ -196,8 +196,11 @@ computers/model/brand
     laptop: true
     (files)
     
-    
 
+Preparation steps.
+
+* Cleaning...
+* Checking prerequisites...
 
 [Abort] [Back] {Continue]
 

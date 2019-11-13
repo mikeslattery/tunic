@@ -30,13 +30,12 @@ This is subject to change over time.
 * Installs: Virtualbox, dual boot, Linux Mint 64bit w/cinnamon
 * Configure basics: user account, locale, lang
 * Full revert.  before.txt, after.txt
-* /mnt/c
+* Mounted C: drive
 
 ### 0.2
 * wifi passwords. Documents, Chrome/Firefox settings
-* VirtualBox run Windows partition included w/sync protections.
-* Convert to GPT, when possible.
-* Add: Ubuntu
+* VirtualBox Linux host runs Windows partition w/sync protections.
+* Convert to GPT or support MBR
 
 ### 1.0
 * GUI
@@ -47,31 +46,44 @@ This is subject to change over time.
 * Port known apps
 * Plugins and flexible configuration to make it easy for others to help
 * Choice of several Debian/Ubuntu based distros
-* Buttons to go web sites: google search, ubuntu support
+* Buttons to go to web sites: google search, ubuntu support
+* LVM and/or partition util
 * Language?
 
 ### Far Future
 * Windows XP support
+* Reboots and continue without password
 * Non-debian distros
+* Grub auto-recover in case windows overwrites efi
 * Distro switcher
 * Assist with backup
 * Warnings for known problematic hardware
 * MacOS to Linux
 
+### Other Use Cases and sub-componetns
+* Backup/Restore MBR/EFI
+* Cleanup drive
+* Shrink/Split/merge/move partitions
+* Install Linux in a VM
+* Make Live USB
+* Uninstall Linux dual boot
+* Distro hop
+* Import settings/apps from Windows to Linux
+* Grub recovery
+
 ## TODOs
+
+### Big Short-term Challenges
+* EFI
+* Unattended Linux install in a VM
+* Auto-Resume from reboot
+* Help with backup/clone
 
 ### Short Term
 * Disable fast boot
 * Disable Hyper-V
 * Install powerwhell 1.0 if not available
 * Install Virtualbox w/o choco (but use choco if it is)
-
-### Big Short-term Challenges
-
-* EFI
-* Unattended Linux install in a VM
-* Auto-Resume from reboot
-* Help with backup/clone
 
 ### Documentation
 * Plugins how-to
@@ -114,11 +126,21 @@ This is subject to change over time.
 
 * NVidia
 
-### Testing
+## Support and Testing
+
+### Manual Testing
 
 * MBR vs EFI
-* Test on Windows XP
-* Partially automated.  Windows with script that starts on boot
+* Test on Windows 7
+
+### Automated Testing
+* VirtualBox in VirtualBox. Nested VBox only supports 32bit OSes
+* Download VMs from Microsoft
+* Install apps in Windows
+* Cache file downloads (option)
+* Scenarios: MBR/EFI, Win 7/10
+* Scripted.
+* Limit phases.  Use snapshots for start phase.
 
 ## Misc
 
@@ -127,7 +149,7 @@ This is subject to change over time.
 * 32bit support
 
 ### Impossible?
-* Switch to legacy boot
+* Switch to/from MBR/GPT
 * Disable secure boot
 * Enable virtualization
 
