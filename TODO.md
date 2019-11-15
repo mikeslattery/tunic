@@ -21,69 +21,77 @@ This is subject to change over time.
 
 ### PoC
 * Limited Scripts to install Linux without any manual steps
+* git clone install
 
 ### MVP - 0.1
 * Set of individual PowerShell scripts.
-* git clone install
 * Opinionated, limited, non-robust
-* Requires: Powershell 1.0, Win 7/10 64bit, Single OS(win), Single C:, EFI, no secure boot
+* Requires: Powershell 1.0, Win 10 64bit, Single OS(win), Single C:, EFI, no secure boot
 * Installs: Virtualbox, dual boot, Linux Mint 64bit w/cinnamon
 * Configure basics: user account, locale, lang
-* Full revert.  before.txt, after.txt
-* Mounted C: drive
+* Mounted C: drive in LInux
+* Install using DownloadString('github..ps1') | iex
 
 ### 0.2
-* wifi passwords. Documents, Chrome/Firefox settings
-* VirtualBox Linux host runs Windows partition w/sync protections.
-* Convert to GPT or support MBR
+* Port iconds: wifi passwords. Documents, Chrome/Firefox settings
+* Desktop icons: Reboot to Windows/Linux
+* Limited efi backup, restore, revert functionality.  before.cfg, after.cfg
 
 ### 1.0
 * GUI
 * Single .exe elevated available from github releases
 * Flexible.  Many entry-points and exit points.  Launch other utilities for help.
-* Added support: Windows Vista/7/8/10, MBR, flexible partitioning, 32 bit Windows/Linux
+* Added support: Windows Vista/7/8/10, flexible partitioning, 32 bit Windows/Linux
+* Convert to GPT or support MBR
+* VirtualBox Linux host runs Windows partition w/sync protections.
 * Port system settings
 * Port known apps
 * Plugins and flexible configuration to make it easy for others to help
 * Choice of several Debian/Ubuntu based distros
 * Buttons to go to web sites: google search, ubuntu support
 * LVM and/or partition util
-* Language?
+* Language change?
 
 ### Far Future
-* Windows XP support
+* Windows XP and 32bit support
 * Reboots and continue without password
-* Non-debian distros
-* Grub auto-recover in case windows overwrites efi
+* AD domain login
+* Minimal distro default if <=2GB.
+* Non-debian distros.
 * Distro switcher
 * Assist with backup
-* Warnings for known problematic hardware
-* MacOS to Linux
+* Warnings/help for known problematic hardware
+* MacOS to Elementary OS
+* Grub auto-recover in case windows overwrites efi
+* BIOS autoconfig. e.g. Dell client configuration utility
 
-### Other Use Cases and sub-componetns
+## Other Possible Use Cases and sub-components
 * Backup/Restore MBR/EFI
-* Cleanup drive
+* Cleanup disk
 * Shrink/Split/merge/move partitions
 * Install Linux in a VM
 * Make Live USB
 * Uninstall Linux dual boot
-* Distro hop
+* Distro hop switcher
 * Import settings/apps from Windows to Linux
-* Grub recovery
+* Full convert from Windows to Linux
+* EFI/Grub/boot menu recovery
 
 ## TODOs
 
-### Big Short-term Challenges
-* EFI
+### Development
+
+#### Big Short-term Challenges
+* EFI and boot menu
 * Unattended Linux install in a VM
 * Auto-Resume from reboot
 * Help with backup/clone
 
-### Short Term
+#### Short Term
 * Disable fast boot
 * Disable Hyper-V
 * Install powerwhell 1.0 if not available
-* Install Virtualbox w/o choco (but use choco if it is)
+* Install Virtualbox w/o choco (but use choco if's installed)
 
 ### Documentation
 * Plugins how-to
@@ -100,21 +108,25 @@ This is subject to change over time.
 * .editorconfig
 * lint check
 
-### Checks
+### User Warnings and Errors
+
+#### Checks
 
 * Administrator
 * enough space
+* 64 bit
+* Not on battery
 * Virtualization enabled
-* EFI/GPT/MBR, secure boot
+* EFI/GPT/MBR, no secure boot
 * Windows 10
 * Powershell libs available
 * Command line apps available
-* Hyper V not installed
+* Hyper V not enabled
 * Choco installed
 * Virtualbox installed
 * Compatibility (some day)
 
-### Warnings
+#### Warnings
 
 * Backup
 * Upgrade firmware
@@ -122,7 +134,7 @@ This is subject to change over time.
 * Might brick your machine
 * Limited support
 
-### Compatibility Warnings
+#### Compatibility Warnings
 
 * NVidia
 
@@ -142,14 +154,9 @@ This is subject to change over time.
 * Scripted.
 * Limit phases.  Use snapshots for start phase.
 
-## Misc
-
-* Powersheme import/export with powercfg.exe
-* Cloners: ODIN, Partition-Saving, Clonedisk
-* 32bit support
-
-### Impossible?
+## Impossible?
 * Switch to/from MBR/GPT
 * Disable secure boot
+* Download and run c0firmware updater
 * Enable virtualization
 

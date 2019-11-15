@@ -195,7 +195,34 @@ computers/model/brand
     name:
     laptop: true
     (files)
-    
+
+
+Steps
+
+[x] Backup
+[x] Clean
+[x] Defrag
+[x] Repartition
+[x] Install
+[x] ...
+
+
+[Abort] [Back] {Continue]
+
+Advice
+
+Best models for Linux
+* Dell
+* Lenovo
+* IBM Thinkpad
+
+[Abort] [Back] {Continue]
+
+Backup
+
+You should do full backup before continuing.
+
+[Abort] [Back] {Continue]
 
 Preparation steps.
 
@@ -217,6 +244,19 @@ Backup
 
 ????
 
+
+[Abort] [Back] [Continue]
+
+Repartition
+
+C: partition size: 120GB
+
+$windows = Resize-Partition -size 70GB   -disknumber 0 -partition 5
+$system  = New-Partition    -size 30GB   -disknumber 0 -offset after-partition($windows)
+$home    = New-Partition -usemaximumsize -disknumber 0 -offset after-partition($system)
+
+
+[Partition Table]
 [Abort] [Back] [Continue]
 
 Distro choice
@@ -420,4 +460,22 @@ Looking for feedback.
 
 For fun, I'm going to experiment with installing dual-boot Linux on a Windows Laptop.  I know it's generally considered not possible due to such a thing, but I'd like to at least try.  Where do you think I'd have the biggest issues with this plan?:
 
-
+------
+Fix
+Quick clean (not hiber,swap)
+Questions (incl. password)
+Clean
+Defrag
+Reboot and Continue (w/o user intervention)
+Defrag
+Questions
+Repartition
+Download io
+Download/install VirtualBox
+Create VM
+ Installing
+ App installation
+ grub
+Reboot to Linux w/auto-login
+Disable auto-login
+Alarm and notice of completion
