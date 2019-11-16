@@ -20,6 +20,12 @@ Simply clone this repository with git.
 
 All scripts are meant to be run from the PowerShell terminal.
 
+You must launch powershell as Administrator and run this command first:
+
+    Set-ExecutionPolicy Bypass -Scope Process -Force
+
+### Commands
+
 `.\clean.ps1` - Remove various files to reduce disk usage, similar to CCleaner.
 
 `.\repartition.\ps1` - Shrink the Windows partition and use the remaining space for new Linux partition(s).
@@ -27,3 +33,4 @@ All scripts are meant to be run from the PowerShell terminal.
 `.\install-vm.ps1` - Install Linux on the new partition(s) and add to boot menu.
 
 `.\unclean.ps1` - Add important files remvoed by `clean.ps1`, such as swap and hibernation files.
+

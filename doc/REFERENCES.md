@@ -28,6 +28,10 @@
 * https://www.dell.com/support/article/us/en/04/sln151664/how-to-install-ubuntu-linux-on-your-dell-pc?lang=en
 * https://tuxboot.org/
 
+### VM
+* https://www.perkin.org.uk/posts/create-virtualbox-vm-from-the-command-line.html
+* https://www.oracle.com/technical-resources/articles/it-infrastructure/admin-manage-vbox-cli.html
+
 ### Testing and Support
 * https://www.microsoft.com/en-us/download/details.aspx?id=8002 - XP
 * https://www.makeuseof.com/tag/download-windows-xp-for-free-and-legally-straight-from-microsoft-si/

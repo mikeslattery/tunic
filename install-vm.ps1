@@ -1,31 +1,53 @@
+Set-ExecutionPolicy Bypass -Scope Process -Force
 
-USER="$(whoami)"
-name="Mint2"
-password="mike68"
-tzone='EST'
-country='US'
-hostname='hostname'
-rawdisk='`\.\PHYSICALDRIVE0'
+$USER="${env:USERNAME}"
+$name="Mint2"
+$password="mike68"
+$tzone='EST'
+$country='US'
+$hostname='hostname'
+$rawdisk='\\.\PHYSICALDRIVE0'
 
-vboxmanage createvm -name "$name" `
+VBoxManage createvm -name "$name" `
   --ostype Ubuntu_64 `
   --register
 
-vboxmanage modifyvm "$name" `
+VBoxManage modifyvm "$name" `
   --cpus 1 `
   --memory 1024 `
   --vram 12
 
+# TODO: skip or del file if exists
+# TODO: determine efi part#
 VBoxManage internalcommands createrawvmdk `
-  -filename 'C:`linux\15.vmdk' \
-  -rawdisk "$rawdisk" -partitions 1,5
+  -filename 'C:\linux\15.vmdk' `
+  -rawdisk "$rawdisk" -partitions 1,6
+
+VBoxManage storagectl "$name" `
+  --name 'SATA Controller' --add sata `
+  --controller IntelAHCI
 
 VBoxManage storageattach "$name" `
-  --storagectl "IDE Controller" `
+  --storagectl 'SATA Controller' `
   --port 0 --device 0 --type hdd `
-  --medium 'C:`linux\15.vmdk'
+  --medium 'C:\linux\15.vmdk'
 
-#TODO: mount iso as .vdi, launch vm w/gui
+VBoxManage storagectl "$name" `
+  --name 'IDE Controller' --add ide
+
+VBoxManage storageattach "$name" `
+  --storagectl 'IDE Controller' `
+  --port 0 --device 0 --type dvddrive `
+  --medium 'C:\linux\mintcin.iso'
+
+#TODO: VBoxManage modifyvm "$name" --ioapic on 
+VBoxManage modifyvm "$name" --boot1 dvd --boot2 disk --boot3 none --boot4 none
+
+VBoxManage startvm "$name"
+exit 0
+
+VBoxManage controlvm "$name" acpipowerbutton
+
 #TODO: unattended w/o harming efi
 
 # [--password-file=file] [--full-user-name=name]
@@ -40,6 +62,6 @@ vboxmanage unattended install "$name" `
   --time-zone "$tzone" `
   --hostname "$hostname" `
   --country "$country" `
-  --iso 'C:`linux\mintcin.iso' \
+  --iso 'C:\linux\mintcin.iso' `
   --start-vm gui
 
