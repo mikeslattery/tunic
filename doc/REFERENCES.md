@@ -31,6 +31,7 @@
 ### VM
 * https://www.perkin.org.uk/posts/create-virtualbox-vm-from-the-command-line.html
 * https://www.oracle.com/technical-resources/articles/it-infrastructure/admin-manage-vbox-cli.html
+* https://www.virtualbox.org/ticket/8760 - locking
 
 ### Testing and Support
 * https://www.microsoft.com/en-us/download/details.aspx?id=8002 - XP
@@ -53,3 +54,4 @@
 * http://www.rodsbooks.com/linux-uefi/
 * https://neosmart.net/wiki/bcdedit/
 * https://askubuntu.com/questions/831216/how-can-i-reinstall-grub-to-the-efi-partition
+

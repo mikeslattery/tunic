@@ -1,4 +1,4 @@
-Set-ExecutionPolicy Bypass -Scope Process -Force
+#TODO: params: partitions(1,6), iso
 
 $USER="${env:USERNAME}"
 $name="Mint2"
@@ -7,6 +7,10 @@ $tzone='EST'
 $country='US'
 $hostname='hostname'
 $rawdisk='\\.\PHYSICALDRIVE0'
+
+if ( $(VBoxManage list vms | findstr "$name") ) {
+  VBoxManage unregistervm "$name" --delete
+}
 
 VBoxManage createvm -name "$name" `
   --ostype Ubuntu_64 `
@@ -17,11 +21,10 @@ VBoxManage modifyvm "$name" `
   --memory 1024 `
   --vram 12
 
-# TODO: skip or del file if exists
 # TODO: determine efi part#
 VBoxManage internalcommands createrawvmdk `
   -filename 'C:\linux\15.vmdk' `
-  -rawdisk "$rawdisk" -partitions 1,6
+  -rawdisk "$rawdisk" -partitions '1,6' -relative
 
 VBoxManage storagectl "$name" `
   --name 'SATA Controller' --add sata `
@@ -43,8 +46,8 @@ VBoxManage storageattach "$name" `
 #TODO: VBoxManage modifyvm "$name" --ioapic on 
 VBoxManage modifyvm "$name" --boot1 dvd --boot2 disk --boot3 none --boot4 none
 
-VBoxManage startvm "$name"
 exit 0
+VBoxManage startvm "$name"
 
 VBoxManage controlvm "$name" acpipowerbutton
 
