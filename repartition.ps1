@@ -66,6 +66,7 @@ choco install -y virtualbox
 
 Write-Host "Creating VM..."
 $rawdisk=(get-wmiobject win32_diskdrive -filter "index=${disk}").deviceId
+#TODO: don't assume EFI is partition 1.  Find by GUID
 VBoxManage internalcommands createrawvmdk -filename "C:\linux\rawparts.vmdk" -rawdisk "$rawdisk" -partitions 1,$linux_system.partitionnumber,$linux_home.partitionnumber
 #TODO: create VM with VBoxManage.  --firmware efi. volume names should match the final names, if possible.
 #TODO:    which video mode

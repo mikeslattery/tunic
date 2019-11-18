@@ -70,6 +70,7 @@ This is subject to change over time.
 * Cleanup disk
 * Shrink/Split/merge/move partitions
 * Install Linux in a VM
+* Convert Windows Partition to VM and delete
 * Make Live USB
 * Uninstall Linux dual boot
 * Distro hop switcher
