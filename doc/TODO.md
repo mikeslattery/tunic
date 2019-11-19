@@ -51,6 +51,7 @@ This is subject to change over time.
 * Buttons to go to web sites: google search, ubuntu support
 * LVM and/or partition util
 * Language change?
+* Get rid of dependency on Virtualbox.  Rebuild iso with unattended install script(s).
 
 ### Far Future
 * Windows XP and 32bit support

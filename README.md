@@ -32,5 +32,5 @@ You must launch powershell as Administrator and run this command first:
 
 `.\install-vm.ps1` - Install Linux on the new partition(s) and add to boot menu.
 
-`.\unclean.ps1` - Add important files remvoed by `clean.ps1`, such as swap and hibernation files.
+`.\unclean.ps1` - Add important files removed by `clean.ps1`, such as swap and hibernation files.
 

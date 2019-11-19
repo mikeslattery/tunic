@@ -28,6 +28,12 @@
 * https://www.groovypost.com/howto/dual-boot-windows-10-linux/
 * https://www.dell.com/support/article/us/en/04/sln151664/how-to-install-ubuntu-linux-on-your-dell-pc
 
+### ISO
+
+* https://askubuntu.com/questions/484434/install-ubuntu-without-cd-and-usb-how
+* https://blogs.gnome.org/muelli/2016/08/remastering-a-custom-ubuntu-auto-install-iso/
+* https://github.com/core-process/linux-unattended-installation/
+
 ### VM
 
 * https://www.perkin.org.uk/posts/create-virtualbox-vm-from-the-command-line.html
