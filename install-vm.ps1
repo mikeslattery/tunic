@@ -23,8 +23,18 @@ VBoxManage modifyvm "$name" `
 
 # TODO: determine efi part#
 VBoxManage internalcommands createrawvmdk `
-  -filename 'C:\linux\15.vmdk' `
-  -rawdisk "$rawdisk" -partitions '1,6' -relative
+  -filename 'C:\linux\partitions.vmdk' `
+  -rawdisk "$rawdisk" -partitions '1,6'
+
+#TODO:
+# Convert as if -relative had been passed.
+# sed -ri 's/FLAT "\\.\PHYSICALDRIVE[1,6]" [0-9]+$/ZERO/' C:\linux\partitions.vmdk
+# sed -ri 's/FLAT "\\.\PHYSICALDRIVE([1-9]+)" [0-9]$/FLAT "\\.\Harddisk0Partition\1" 0/' C:\linux\partitions.vmdk
+# unmapped lines will have ZERO$ instead of FLAT.*$
+# 1st line is without -relative
+# 1st col is size/12.  1st line last col is relative to beginning /512.
+#-RW 171911168 FLAT "\\.\PHYSICALDRIVE0" 65820672
+#+RW 171911168 FLAT "\\.\Harddisk0Partition6" 0
 
 VBoxManage storagectl "$name" `
   --name 'SATA Controller' --add sata `
@@ -33,7 +43,7 @@ VBoxManage storagectl "$name" `
 VBoxManage storageattach "$name" `
   --storagectl 'SATA Controller' `
   --port 0 --device 0 --type hdd `
-  --medium 'C:\linux\15.vmdk'
+  --medium 'C:\linux\partitions.vmdk'
 
 VBoxManage storagectl "$name" `
   --name 'IDE Controller' --add ide
