@@ -61,7 +61,9 @@ start-vm() {
     if ! _vmrunning; then
         vboxmanage startvm "$VM" --type gui
         while ! nc -z localhost "$SSHPORT"; do sleep 2; done
+        sleep 10
     fi
+    echo 'Started VM.'
 }
 
 use "shell       Run a shell command in the VM"
@@ -74,6 +76,12 @@ power-up() {
     create-vm
     start-vm
     shell "$@"
+}
+
+use "install-iso   A complete test"
+install-iso() {
+    #shell 'X: && cd src/tunic && powershell -executionpolicy bypass -command .\install-efi.ps1 && shutdown /r /t 0'
+    power-up 'X: && cd src/tunic && powershell -executionpolicy bypass -command .\install-efi.ps1 && shutdown /r /t 0'
 }
 
 power-down() {

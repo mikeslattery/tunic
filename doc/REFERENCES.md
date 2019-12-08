@@ -67,4 +67,5 @@
 * http://www.rodsbooks.com/linux-uefi/
 * https://neosmart.net/wiki/bcdedit/
 * https://askubuntu.com/questions/831216/how-can-i-reinstall-grub-to-the-efi-partition
+* https://www.codeproject.com/Articles/833655/Modify-Windows-BCD-using-Powershell
 
