@@ -95,6 +95,14 @@ This is subject to change over time.
 * Install powerwhell 1.0 if not available
 * Install Virtualbox w/o choco (but use choco if's installed)
 
+#### Testing setup
+* Linux host.  Possible WSL/Cygwin support.
+* Download MS Windows testing VM.  Unzip and import.
+* Create linked clone.  Install all the things.
+* Install: mbr2gpt, sshd, guest additions,
+* modifyvm for efi boot. disable secure boot.
+* Download ISO and place in a cache directory.
+
 ### Documentation
 * Plugins how-to
 * contribute.md
@@ -161,4 +169,12 @@ This is subject to change over time.
 * Disable secure boot
 * Download and run c0firmware updater
 * Enable virtualization
+
+## Basic Flow
+1. Clean
+2. Create new parition
+3. Copy ISO to partition (not including MBR)
+4. Modify ISO partition to include seed files
+5. Copy grub files to efi partition
+6. Reboot to Linux
 
