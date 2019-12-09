@@ -1,14 +1,25 @@
 # Configure VM for testing purposes
 
-#TODO: create test VM
-# download microsoft VM, unzip, del .zip
-# create VM
-# 3GB, 1 CPU
-# share home
+# Parts were copied from ./install-efi.ps1
+
+Write-host "Started."
+
+$iso_url='http://mirrors.kernel.org/linuxmint/stable/19.2/linuxmint-19.2-cinnamon-64bit.iso'
+
+$letter = $env:HOMEDRIVE[0]
+$tunic_dir="${env:ALLUSERSPROFILE}\tunic"
+$iso = "${tunic_dir}\linux.iso"
+
+#TODO: replace mkdir with better ps command
+mkdir "$tunic_dir" -force
+
+if ( -not (Test-Path "$iso") ) {
+    Write-host "Downloading ISO... (this takes a long time)"
+    (New-Object System.Net.WebClient).DownloadFile($iso_url, "$iso")
+}
 
 # SSH
 
-Add-WindowsCapability -Online -Name OpenSSH.Client~~~~0.0.1.0
 Add-WindowsCapability -Online -Name OpenSSH.Server~~~~0.0.1.0
 Start-Service sshd
 Set-Service -Name sshd -StartupType 'Automatic'

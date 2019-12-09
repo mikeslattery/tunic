@@ -29,6 +29,17 @@ _vmrunning() {
     VBoxManage list runningvms | grep -sq "\"${VM}\""
 }
 
+use 'build-vm    Create a Windows VM image'
+build-vm() {
+    echo 'Not implemented'; exit 1
+
+    #TODO: create test VM
+    # download microsoft VM, unzip, del .zip
+    # create base VM
+    # 3GB, 1 CPU
+    # share home
+}
+
 use "stop-vm     Stop running VM"
 stop-vm() {
     if _vmrunning; then
@@ -61,7 +72,7 @@ start-vm() {
     if ! _vmrunning; then
         vboxmanage startvm "$VM" --type gui
         while ! nc -z localhost "$SSHPORT"; do sleep 2; done
-        sleep 10
+        sleep 25
     fi
     echo 'Started VM.'
 }
