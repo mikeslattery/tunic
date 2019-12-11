@@ -69,6 +69,7 @@
 * http://www.rodsbooks.com/linux-uefi/
 * https://neosmart.net/wiki/bcdedit/
 * https://askubuntu.com/questions/831216/how-can-i-reinstall-grub-to-the-efi-partition
+* https://www.codeproject.com/Articles/833655/Modify-Windows-BCD-using-Powershell
 
 ### Automated Install
 
@@ -77,4 +78,22 @@
 * https://github.com/linuxmint/ubiquity/blob/master/d-i/source/preseed/debian/file-preseed.postinst
 * https://github.com/linuxmint/ubiquity/blob/master/bin/ubiquity
 * https://github.com/linuxmint/ubiquity/blob/master/d-i/source/preseed/preseed.sh
+
+#### Preseeding
+* https://www.leifove.com/2016/11/fully-automated-linux-mint-desktop.html
+* https://wiki.ubuntu.com/UbiquityAutomation
+* https://help.ubuntu.com/lts/installation-guide/armhf/apbs02.html
+* https://askubuntu.com/questions/1002043/how-to-an-unattended-installation-of-ubuntu-16-04-on-a-disk-with-existing-os
+* https://github.com/core-process/linux-unattended-installation/tree/master/ubuntu/18.04/custom
+* https://www.leifove.com/2016/11/fully-automated-linux-mint-desktop.html
+* https://debian-handbook.info/browse/stable/sect.automated-installation.html
+* https://www.debian.org/releases/stable/example-preseed.txt
+* https://www.packer.io/guides/automatic-operating-system-installs/preseed_ubuntu.html
+* https://askubuntu.com/questions/457528/how-do-i-create-an-efi-bootable-iso-of-a-customized-version-of-ubuntu
+* https://askubuntu.com/questions/806820/how-do-i-create-a-completely-unattended-install-of-ubuntu-desktop-16-04-1-lts
+* https://github.com/hvanderlaan/ubuntu-unattended
+
+### Kickstart
+* https://help.ubuntu.com/community/KickstartCompatibility
+* http://gyk.lt/ubuntu-16-04-desktop-unattended-installation/
 
