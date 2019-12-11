@@ -197,6 +197,15 @@ computers/model/brand
     (files)
 
 
+UI tabs
+
+Install - main ui
+Script - currently running scripts and progress bar.
+   Past is white, current is yellow, future is gray.
+Log - past script + output
+    buttons: save, files (brower temp files)
+
+
 Steps
 
 [x] Backup
@@ -221,8 +230,26 @@ Best models for Linux
 Backup
 
 You should do full backup before continuing.
+Click Abort if you'd like to stop and do a backu.
 
 [Abort] [Back] {Continue]
+[Backup Manager]
+
+Cleanup
+
+Before we begining we recommend cleaning up your hard drive to free up space for the install
+and to temporarily get unmoveable files out of the way.
+
+[x] Disable swap file
+[x] Disable hibernate file
+[x] Remove restore points
+[x] Remove dumps
+[x] Clean temp
+[x] Defragment drive
+
+Swap and hibernate will be reset to their original values after the install is complete.
+
+[Abort] [Back] [Continue]
 
 Preparation steps.
 
@@ -346,24 +373,12 @@ C++ Runtime
 
 [Abort] [Back] [Continue]
 
-Cleanup
-
-[x] Disable swap file
-[x] Disable hibernate file
-[x] Remove restore points
-[x] Remove dumps
-[x] Clean temp
-[x] Defragment drive
-
-Swap and hibernate will be reset to their original values after the install is complete.
-
-
-
-[Abort] [Back] [Continue]
-
 Size.
 C: is using ____ GB with ____ GB of free space.
+Linux is estimaged to require ___ GB of space.
+
 How much space do you want to allocate for Linux? ____ GB
+Windows will retain ___ GB of free space.
 
 [x] Install Linux on newly from free space.
 

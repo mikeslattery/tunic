@@ -39,7 +39,7 @@
 * https://www.perkin.org.uk/posts/create-virtualbox-vm-from-the-command-line.html
 * https://www.oracle.com/technical-resources/articles/it-infrastructure/admin-manage-vbox-cli.html
 * https://www.virtualbox.org/ticket/8760 - locking
-* https://www.howtogeek.com/213145/how-to%C2%A0convert-a-physical-windows-or-linux-pc-to-a-virtual-machine/
+* https://www.howtogeek.com/213145/how-to%C2%A0convert-a-physical-windows-or-linux-pc-to-a-virtual-machine/ggj
 
 ### Testing and Support
 * https://www.microsoft.com/en-us/download/details.aspx?id=8002 - XP
@@ -50,11 +50,13 @@
 #### Repartitioning
 
 * http://www.smorgasbork.com/2019/04/23/fedora-windows-10-dual-boot-on-dell-inspiron/
+* https://docs.microsoft.com/en-us/powershell/module/bitlocker/suspend-bitlocker?view=win10-ps
 
 #### MBR
 
 * https://www.linuxquestions.org/questions/linux-general-1/using-bcdedit-to-configure-a-multiboot-system-and-add-linux-4175644308/
 * https://wiki.archlinux.org/index.php/Dual_boot_with_Windows/SafeBoot
+* https://docs.microsoft.com/en-us/windows/deployment/mbr-to-gpt
 
 #### EFI
 
@@ -67,4 +69,12 @@
 * http://www.rodsbooks.com/linux-uefi/
 * https://neosmart.net/wiki/bcdedit/
 * https://askubuntu.com/questions/831216/how-can-i-reinstall-grub-to-the-efi-partition
+
+### Automated Install
+
+### Ubiquity
+
+* https://github.com/linuxmint/ubiquity/blob/master/d-i/source/preseed/debian/file-preseed.postinst
+* https://github.com/linuxmint/ubiquity/blob/master/bin/ubiquity
+* https://github.com/linuxmint/ubiquity/blob/master/d-i/source/preseed/preseed.sh
 

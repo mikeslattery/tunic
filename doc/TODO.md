@@ -27,44 +27,31 @@ This is subject to change over time.
 * Set of individual PowerShell scripts.
 * Opinionated, limited, non-robust
 * Requires: Powershell 1.0, Win 10 64bit, Single OS(win), Single C:, EFI, no secure boot
-* Installs: Virtualbox, dual boot, Linux Mint 64bit w/cinnamon
+* Installs: Dual boot, Linux Mint 64bit w/Cinnamon
 * Configure basics: user account, locale, lang
-* Mounted C: drive in LInux
 * Install using DownloadString('github..ps1') | iex
+* No support: XP/7/8, MBR, Bitlocker, AD, 32bit, LVM
 
 ### 0.2
-* Port iconds: wifi passwords. Documents, Chrome/Firefox settings
-* Desktop icons: Reboot to Windows/Linux
+* Run as exe as administrator (ps2exe)
+* Port config: wifi passwords, locale, Chrome/Firefox settings
 * Limited efi backup, restore, revert functionality.  before.cfg, after.cfg
+* Bitlocker support
+* Convert to GPT
+* Reboot and continue without user intervention of password during install
 
 ### 1.0
 * GUI
-* Single .exe elevated available from github releases
 * Flexible.  Many entry-points and exit points.  Launch other utilities for help.
-* Added support: Windows Vista/7/8/10, flexible partitioning, 32 bit Windows/Linux
-* Convert to GPT or support MBR
-* VirtualBox Linux host runs Windows partition w/sync protections.
-* Port system settings
-* Port known apps
-* Plugins and flexible configuration to make it easy for others to help
+* Added support: Windows 7/8, MBR, flexible partitioning, 32 bit Windows
 * Choice of several Debian/Ubuntu based distros
-* Buttons to go to web sites: google search, ubuntu support
-* LVM and/or partition util
-* Language change?
-* Get rid of dependency on Virtualbox.  Rebuild iso with unattended install script(s).
-
-### Far Future
-* Windows XP and 32bit support
-* Reboots and continue without password
-* AD domain login
-* Minimal distro default if <=2GB.
-* Non-debian distros.
-* Distro switcher
-* Assist with backup
-* Warnings/help for known problematic hardware
-* MacOS to Elementary OS
-* Grub auto-recover in case windows overwrites efi
-* BIOS autoconfig. e.g. Dell client configuration utility
+* Port settings and apps
+* Plugins and flexible configuration to make it easy for others to help
+* Buttons to go to web sites for help: google search, ubuntu support
+* LVM and/or partition util?
+* Programming Language change?
+* Desktop icons: efi recover, OS in VM, reboot, browse files
+* VirtualBox Linux host runs Windows partition w/sync protections.
 
 ## Other Possible Use Cases and sub-components
 * Backup/Restore MBR/EFI
@@ -72,12 +59,30 @@ This is subject to change over time.
 * Shrink/Split/merge/move partitions
 * Install Linux in a VM
 * Convert Windows Partition to VM and delete
+* Install existing Linux partition as VM
 * Make Live USB
 * Uninstall Linux dual boot
 * Distro hop switcher
 * Import settings/apps from Windows to Linux
+* Import apps from Windows to OSS Windows
 * Full convert from Windows to Linux
 * EFI/Grub/boot menu recovery
+* Remove Windows
+* Install Windows after Linux
+
+### Far Future
+* Windows Vista/XP and 32bit support
+* AD domain login
+* Fully remove Windows with option to convert to VM
+* Allow secure boot.  Detect if supportable.
+* BIOS autoconfig. e.g. Dell client configuration utility
+* BIOS help screens
+* Minimal distro default if <=2GB.
+* Non-debian distros.
+* Distro switcher.  Add multiple distros into menu.
+* Assist with backup
+* Warnings/help for known problematic hardware
+* MacOS to Elementary OS
 
 ## TODOs
 

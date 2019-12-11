@@ -40,5 +40,6 @@ Write-Host "Defragmenting disk..."
 Optimize-Volume -DriveLetter $letter -ReTrim -Defrag -SlabConsolidate -TierOptimize -NormalPriority
 
 # Reboot is necessary before swap can be deleted.
+#TODO: reboot and continue w/o password
 Restart-Computer
 
