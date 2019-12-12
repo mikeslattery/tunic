@@ -27,12 +27,15 @@ This is subject to change over time.
 * Set of individual PowerShell scripts.
 * Opinionated, limited, non-robust
 * Requires: Powershell 1.0, Win 10 64bit, Single OS(win), Single C:, EFI, no secure boot
-* Installs: Dual boot, Linux Mint 64bit w/Cinnamon
+* Installs: Full replacement, Linux Mint 64bit w/Cinnamon
 * Configure basics: user account, locale, lang
-* Install using DownloadString('github..ps1') | iex
 * No support: XP/7/8, MBR, Bitlocker, AD, 32bit, LVM
 
 ### 0.2
+* Installs: Dual boot, Linux Mint 64bit w/Cinnamon
+* Install using DownloadString('github..ps1') | iex
+
+### 0.3
 * Run as exe as administrator (ps2exe)
 * Port config: wifi passwords, locale, Chrome/Firefox settings
 * Limited efi backup, restore, revert functionality.  before.cfg, after.cfg
@@ -66,15 +69,22 @@ This is subject to change over time.
 * Import settings/apps from Windows to Linux
 * Import apps from Windows to OSS Windows
 * Full convert from Windows to Linux
-* EFI/Grub/boot menu recovery
+* EFI/Grub/boot menu restore or repair
 * Remove Windows
 * Install Windows after Linux
+* Make persistent USB
+* Live USB with multiple distros
+* Install another Linux distro over current.
+* Install WSL to partition.
+* Run Linux in file on ntfs/ext4 loopback
+* Fast EFI boot (fwbootmgr -> Linux kernel w/ ext4 efi driver)
+* Decimate Windows.  Delete all except user files, defrag.
 
 ### Far Future
-* Windows Vista/XP and 32bit support
+* Allow secure boot.  Detect if supportable.
+* Support for: Windows Vista/XP, 32bit, MBR
 * AD domain login
 * Fully remove Windows with option to convert to VM
-* Allow secure boot.  Detect if supportable.
 * BIOS autoconfig. e.g. Dell client configuration utility
 * BIOS help screens
 * Minimal distro default if <=2GB.

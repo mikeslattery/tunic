@@ -58,6 +58,7 @@ Write-Host "Repartition done.  Start of install."
 Write-Host "Downloading ISO..."
 mkdir C:\linux
 $iso_url='http://mirrors.kernel.org/linuxmint/stable/19.2/linuxmint-19.2-cinnamon-64bit.iso'
+#TODO: use BitsTransfer - set policy.  Start earlier.
 (New-Object System.Net.WebClient).DownloadFile($iso_url, "C:\linux\live.iso")
 
 Write-Host "Installing VirtualBox..."

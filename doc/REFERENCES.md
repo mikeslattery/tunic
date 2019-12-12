@@ -73,15 +73,17 @@
 
 ### Automated Install
 
-### Ubiquity
+#### Ubiquity
 
+* https://code.launchpad.net/ubiquity
+* https://wiki.ubuntu.com/UbiquityAutomation
 * https://github.com/linuxmint/ubiquity/blob/master/d-i/source/preseed/debian/file-preseed.postinst
 * https://github.com/linuxmint/ubiquity/blob/master/bin/ubiquity
 * https://github.com/linuxmint/ubiquity/blob/master/d-i/source/preseed/preseed.sh
 
 #### Preseeding
+
 * https://www.leifove.com/2016/11/fully-automated-linux-mint-desktop.html
-* https://wiki.ubuntu.com/UbiquityAutomation
 * https://help.ubuntu.com/lts/installation-guide/armhf/apbs02.html
 * https://askubuntu.com/questions/1002043/how-to-an-unattended-installation-of-ubuntu-16-04-on-a-disk-with-existing-os
 * https://github.com/core-process/linux-unattended-installation/tree/master/ubuntu/18.04/custom
@@ -93,7 +95,19 @@
 * https://askubuntu.com/questions/806820/how-do-i-create-a-completely-unattended-install-of-ubuntu-desktop-16-04-1-lts
 * https://github.com/hvanderlaan/ubuntu-unattended
 
-### Kickstart
+#### Kickstart
+
 * https://help.ubuntu.com/community/KickstartCompatibility
 * http://gyk.lt/ubuntu-16-04-desktop-unattended-installation/
+
+#### Migration
+
+* https://git.launchpad.net/ubiquity/tree/ubiquity/plugins/ubi-migrationassistant.py?id=251afaeba2ee760267bd0253d24ffa6b668239a2
+
+### Post Install
+
+These are things that can be used after the install for better integration between the partitions.
+
+* https://www.glump.net/howto/desktop/seamless-remote-linux-desktop-in-windows
+* https://www.reddit.com/r/linuxquestions/comments/e964o5/way_to_reboot_to_windows_from_within_linux/
 
