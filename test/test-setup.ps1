@@ -29,6 +29,7 @@ New-NetFirewallRule -Name sshd -DisplayName 'OpenSSH Server (sshd)' -Enabled Tru
 # Chocolatey install
 Set-ExecutionPolicy Bypass -Scope Process -Force; iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
 choco install -y curl
+choco install -y nsis-advancedlogging
 choco install -y unetbootin
 choco install -y virtualbox-guest-additions-guest.install
 

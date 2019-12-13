@@ -28,6 +28,9 @@
 * https://www.groovypost.com/howto/dual-boot-windows-10-linux/
 * https://www.dell.com/support/article/us/en/04/sln151664/how-to-install-ubuntu-linux-on-your-dell-pc
 
+### Downloads
+* https://github.com/unetbootin/unetbootin/blob/master/src/unetbootin/distrolst.cpp
+
 ### ISO
 
 * https://askubuntu.com/questions/484434/install-ubuntu-without-cd-and-usb-how
@@ -40,8 +43,12 @@
 * https://www.oracle.com/technical-resources/articles/it-infrastructure/admin-manage-vbox-cli.html
 * https://www.virtualbox.org/ticket/8760 - locking
 * https://www.howtogeek.com/213145/how-to%C2%A0convert-a-physical-windows-or-linux-pc-to-a-virtual-machine/ggj
+* https://app.vagrantup.com/Microsoft/boxes/EdgeOnWindows10
+* https://github.com/samrocketman/vagrant-windows/blob/master/windows10/Vagrantfile
+* https://www.vagrantup.com/docs/provisioning/shell.html
 
 ### Testing and Support
+
 * https://www.microsoft.com/en-us/download/details.aspx?id=8002 - XP
 * https://www.makeuseof.com/tag/download-windows-xp-for-free-and-legally-straight-from-microsoft-si/
 
