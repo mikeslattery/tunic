@@ -1,8 +1,11 @@
+# Automated install of an ISO file
+
 Write-host "Started."
 
 $iso_url='http://mirrors.kernel.org/linuxmint/stable/19.2/linuxmint-19.2-cinnamon-64bit.iso'
 
 $letter = $env:HOMEDRIVE[0]
+$root_dir="${letter}:"
 $tunic_dir="${env:ALLUSERSPROFILE}\tunic"
 $iso = "${tunic_dir}\linux.iso"
 
@@ -12,6 +15,7 @@ mkdir "$tunic_dir" -force
 $partc = get-partition -driveletter C 
 if( (get-disk -number $partc.diskNumber).partitionStyle -eq 'MBR' ) {
     Write-host "Converting from MBR to GPT..."
+    mbr2gpt /validate /allowfullos
     mbr2gpt /convert /allowfullos
 }
 
@@ -23,8 +27,13 @@ if ( -not (Test-Path "$iso") ) {
         copy "$ciso" "$iso"
     } else {
         Write-host "Downloading ISO... (this takes a long time)"
-        (New-Object System.Net.WebClient).DownloadFile($iso_url, "$iso")
-        #TODO: verify integrity
+        try {
+            (New-Object System.Net.WebClient).DownloadFile($iso_url, "$iso")
+            #TODO: verify integrity
+        } catch {
+            Remove-Item "$iso"
+            Throw "Download failed"
+        }
     }
 }
 
@@ -40,16 +49,19 @@ if ( -not (Test-Path "$efi") ) {
 
 if ( -not (Test-Path "$efi\boot\grub") ) {
     $usb = "$(( mount-diskimage -imagepath "$iso" | get-volume ).driveletter):"
+    # Grub
     mkdir "${efi}\boot\grub" -force
     #TODO: shimx64.efi (shim*.deb file).
     copy "${usb}\boot\grub\x86_64-efi" "${efi}\boot\grub\." -recurse
-    copy "${usb}\EFI\BOOT\grubx64.efi" "$efi\boot\grub\."
-    copy "files\grub.cfg" "$efi\boot\grub\."
-    copy "files\preceed.cfg" "$tunic_dir"
-    copy "files\ks.cfg" "$tunic_dir"
-    #TODO: remove
-    copy "files\ks.cfg" "$efi\boot\grub\."
-    copy "files\preceed.cfg" "$efi\boot\grub\."
+    copy "${usb}\EFI\BOOT\grubx64.efi" "${efi}\boot\grub\."
+    copy "files\grub.cfg" "${efi}\boot\grub\."
+    # Preseed
+    copy "files\preseed.cfg" "${tunic_dir}\."
+    # iso
+    #TODO: remove if iso loopback works
+    Write-host "Copying ISO..."
+    copy "${usb}\*" "${root_dir}\." -recurse
+
     dismount-diskimage -imagepath "$iso"
 }
 
@@ -74,7 +86,5 @@ mountvol $efi /d
 
 Write-host "ISO Install complete.  Time to reboot."
 
-#TODO: uncomment
-# shutdown /r /t 1
-# exit
+shutdown /r /t 1
 
