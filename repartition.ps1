@@ -71,7 +71,7 @@ $rawdisk=(get-wmiobject win32_diskdrive -filter "index=${disk}").deviceId
 VBoxManage internalcommands createrawvmdk -filename "C:\linux\rawparts.vmdk" -rawdisk "$rawdisk" -partitions 1,$linux_system.partitionnumber,$linux_home.partitionnumber
 #TODO: create VM with VBoxManage.  --firmware efi. volume names should match the final names, if possible.
 #TODO:    which video mode
-#TODO: use VMBoxManage unattended + preceed.cfg
+#TODO: use VMBoxManage unattended + preseed.cfg
 
 # Write-Host "Adding to boot menu..."
 $parttype = (get-disk -disknumber $disk).partitionstyle

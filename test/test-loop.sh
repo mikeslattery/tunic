@@ -5,6 +5,7 @@ Usage: $0 <subcommand> [<args>]
 ${docs}
 USAGE
 }
+use() { docs="${docs}${1}"$'\n'; }
 
 set -euo pipefail
 
@@ -15,7 +16,6 @@ SSHPORT=5222
 SSHUSER=ieuser
 winhome="/c/Users/$SSHUSER"
 docs=""
-use() { docs="${docs}${1}"$'\n'; }
 
 vboxmanage() {(
     set -x
@@ -29,7 +29,14 @@ _vmrunning() {
     VBoxManage list runningvms | grep -sq "\"${VM}\""
 }
 
-use 'build-vm    Create a Windows VM image'
+use 'install-tools Install packages required for testing on Ubuntu'
+install-tools() {
+    sudo apt update
+    sudo apt install -y virtualbox
+    sudo apt install -y openssh-client
+}
+
+use 'build-vm      Create a Windows VM image'
 build-vm() {
     echo 'Not implemented'; exit 1
 
@@ -40,7 +47,7 @@ build-vm() {
     # share home
 }
 
-use "stop-vm     Stop running VM"
+use "stop-vm       Stop running VM"
 stop-vm() {
     if _vmrunning; then
         vboxmanage controlvm "$VM" poweroff
@@ -49,7 +56,7 @@ stop-vm() {
     fi
 }
 
-use "delete-vm   Deletes VM"
+use "delete-vm     Deletes VM"
 delete-vm() {
     if _vmexists; then
         vboxmanage unregistervm "$VM" --delete
@@ -58,8 +65,8 @@ delete-vm() {
     fi
 }
 
-use "create-vm   Creates the test VM '$VM'"
-use "            from VM '$VMBASE' snapshot '$SNAPSHOT'"
+use "create-vm     Creates the test VM '$VM'"
+use "              from VM '$VMBASE' snapshot '$SNAPSHOT'"
 create-vm() {
     if ! _vmexists; then
         vboxmanage snapshot "$VMBASE" take "$SNAPSHOT"
@@ -67,7 +74,7 @@ create-vm() {
     fi
 }
 
-use "start-vm    Starts the test VM"
+use "start-vm      Starts the test VM"
 start-vm() {
     if ! _vmrunning; then
         vboxmanage startvm "$VM" --type gui
@@ -77,7 +84,7 @@ start-vm() {
     echo 'Started VM.'
 }
 
-use "shell       Run a shell command in the VM"
+use "shell         Run a shell command in the VM"
 shell() {
     sshpass -p 'Passw0rd!' ssh "$SSHUSER"@localhost -p "$SSHPORT" "$@"
 }
@@ -91,19 +98,13 @@ power-up() {
 
 use "install-iso   A complete test"
 install-iso() {
-    #shell 'X: && cd src/tunic && powershell -executionpolicy bypass -command .\install-efi.ps1 && shutdown /r /t 0'
-    power-up 'X: && cd src/tunic && powershell -executionpolicy bypass -command .\install-efi.ps1 && shutdown /r /t 0'
+    #shell 'X: && cd src/tunic && powershell -executionpolicy bypass -command .\install-efi.ps1'
+    power-up 'X: && cd src/tunic && powershell -executionpolicy bypass -command .\install-efi.ps1'
 }
 
 power-down() {
     stop-vm
     delete-vm
-}
-
-loop() {
-    power-up
-    shell "dir"
-    power-down
 }
 
 main() {
