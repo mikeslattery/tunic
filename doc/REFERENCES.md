@@ -96,11 +96,15 @@
 * https://github.com/core-process/linux-unattended-installation/tree/master/ubuntu/18.04/custom
 * https://www.leifove.com/2016/11/fully-automated-linux-mint-desktop.html
 * https://debian-handbook.info/browse/stable/sect.automated-installation.html
+* https://help.ubuntu.com/lts/installation-guide/example-preseed.txt
 * https://www.debian.org/releases/stable/example-preseed.txt
 * https://www.packer.io/guides/automatic-operating-system-installs/preseed_ubuntu.html
 * https://askubuntu.com/questions/457528/how-do-i-create-an-efi-bootable-iso-of-a-customized-version-of-ubuntu
 * https://askubuntu.com/questions/806820/how-do-i-create-a-completely-unattended-install-of-ubuntu-desktop-16-04-1-lts
 * https://github.com/hvanderlaan/ubuntu-unattended
+* https://wikitech.wikimedia.org/wiki/PartMan
+* https://wikitech.wikimedia.org/wiki/PartMan/Auto
+* https://github.com/xpeppers/provisioning-example
 
 #### Kickstart
 

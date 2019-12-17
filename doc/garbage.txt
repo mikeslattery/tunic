@@ -1,5 +1,12 @@
 This file is for brain-storming.  It's full of junk and garbage.
 
+TOP TODO: preseed
+# https://help.ubuntu.com/lts/installation-guide/example-preseed.txt
+d-i partman-auto/init_automatically_partition select biggest_free
+d-i partman-auto/choose_recipe select atomic
+
+ps1 tempalte - https://gist.github.com/9to5IT/9620683
+template engine - $ExecutionContext.InvokeCommand.ExpandString((get-content "preseed.cfg.tpl"))
 
 WINDOWS TO LINUX
 
@@ -237,7 +244,7 @@ Click Abort if you'd like to stop and do a backu.
 
 Cleanup
 
-Before we begining we recommend cleaning up your hard drive to free up space for the install
+We recommend cleaning your hard drive to free up space for the install
 and to temporarily get unmoveable files out of the way.
 
 [x] Disable swap file
@@ -255,6 +262,7 @@ Preparation steps.
 
 * Cleaning...
 * Checking prerequisites...
+  (64bit, win10, not on battery, not fast boot, enough free space on Windows after clean)
 
 [Abort] [Back] {Continue]
 
