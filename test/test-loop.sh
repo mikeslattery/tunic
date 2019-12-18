@@ -89,6 +89,7 @@ shell() {
     sshpass -p 'Passw0rd!' ssh "$SSHUSER"@localhost -p "$SSHPORT" "$@"
 }
 
+use "power-up      Recycle VM and start shell"
 power-up() {
     power-down
     create-vm
@@ -96,15 +97,16 @@ power-up() {
     shell "$@"
 }
 
-use "install-iso   A complete test"
-install-iso() {
-    #shell 'X: && cd src/tunic && powershell -executionpolicy bypass -command .\install-efi.ps1'
-    power-up 'X: && cd src/tunic && powershell -executionpolicy bypass -command .\install-efi.ps1'
-}
-
+use "power-down    Stop and delete VM"
 power-down() {
     stop-vm
     delete-vm
+}
+
+use "install-iso   A complete test"
+install-iso() {
+    #shell 'X: && cd src/tunic && powershell -executionpolicy bypass -command .\install-efi.ps1'
+    power-up 'X: && cd src/tunic && powershell -executionpolicy bypass -command .\install-efi.ps1 install'
 }
 
 main() {
