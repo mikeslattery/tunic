@@ -59,9 +59,10 @@ This is subject to change over time.
 ## Other Possible Use Cases and sub-components
 * Backup/Restore MBR/EFI
 * Cleanup disk
-* Shrink/Split/merge/move partitions
+* Shrink/Split/merge/move partitions.
+* Shrink windows/expand Linux
 * Install Linux in a VM
-* Convert Windows Partition to VM and delete
+* Convert Windows Partition to VM and delete from grub/nvram
 * Install existing Linux partition as VM
 * Make Live USB
 * Uninstall Linux dual boot
@@ -75,6 +76,7 @@ This is subject to change over time.
 * Make persistent USB
 * Live USB with multiple distros
 * Install another Linux distro over current.
+* Convert to LVM
 * Install WSL to partition.
 * Run Linux in file on ntfs/ext4 loopback
 * Fast EFI boot (fwbootmgr -> Linux kernel w/ ext4 efi driver)

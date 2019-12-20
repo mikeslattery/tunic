@@ -1,13 +1,4 @@
 This file is for brain-storming.  It's full of junk and garbage.
-
-TOP TODO: preseed
-# https://help.ubuntu.com/lts/installation-guide/example-preseed.txt
-d-i partman-auto/init_automatically_partition select biggest_free
-d-i partman-auto/choose_recipe select atomic
-
-ps1 tempalte - https://gist.github.com/9to5IT/9620683
-template engine - $ExecutionContext.InvokeCommand.ExpandString((get-content "preseed.cfg.tpl"))
-
 WINDOWS TO LINUX
 
 architecture:
@@ -222,8 +213,7 @@ Steps
 [x] Install
 [x] ...
 
-
-[Abort] [Back] {Continue]
+[MCüç[MCMMCûCÛMC
 
 Advice
 
@@ -502,3 +492,68 @@ Create VM
 Reboot to Linux w/auto-login
 Disable auto-login
 Alarm and notice of completion
+
+---- RECENT
+
+Testing:
+* ./install-tools
+* use vagrant build of windows VMs
+* install stuff into the VM
+* include a very simple http server and modify hosts file
+* use as a snapshot from there
+* mapping to linux home dir
+* script to tell vagrant to use snapshot
+
+0.0.1 - not reliable, but usable.
++NSIS installer
++check freespace.  tell user they need to free up space.
++mbr2gpt + ISO partition
++download ISO
++reboot (to ubiquity)
+
+0.0.2
++enable swap (if previously disabled)
+ clear space
+/check freespace.  disable swap and tell user to reboot and try again.
+ mbr2gpt + ISO partition
+ download ISO
+ reboot (to ubiquity)
+ 
+0.1.0 - MVP
+ ì[MCÏ
+ clear space
++ask user: disk space
+ check freespace.  disable swap and tell user to reboot and try again.
+ mbr2gpt + ISO partition
++shrink C:
++generate preseed values for simple install.  No auto-approve
+ download ISO
+ reboot (to ubiquity)
+
+0.1.1
+ enable swap (if previously disabled)
++skip to partition step if this is 2nd run.
+ clear space.
++checkpoint.
+ ask user: disk space.
+ mbr2gpt + ISO partition
++shrink C:
+/generate preseed values.  Will auto-approve, reboot, delete ISO post-install
+ download ISO
+ reboot (to ubiquity)
+
+* Pull down list of mirrors from site
+* Ping each with timeout.
+* use random 4 for download.  use aria2 for download
+* separate fat32 partition: no other files.
+* run in background
+* resume as needed (reboots)
+
+TOP TODO: preseed
+# https://help.ubuntu.com/lts/installation-guide/example-preseed.txt
+d-i partman-auto/init_automatically_partition select biggest_free
+d-i partman-auto/choose_recipe select atomic
+
+ps1 tempalte - https://gist.github.com/9to5IT/9620683
+template engine - $ExecutionContext.InvokeCommand.ExpandString((get-content "preseed.cfg.tpl"))
+
