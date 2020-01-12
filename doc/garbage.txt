@@ -520,7 +520,7 @@ Testing:
  reboot (to ubiquity)
  
 0.1.0 - MVP
- ì[MCÏ
+ enable swap (if previously disabled)
  clear space
 +ask user: disk space
  check freespace.  disable swap and tell user to reboot and try again.

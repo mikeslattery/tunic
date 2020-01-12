@@ -2,7 +2,6 @@
 Write-Host "Cleaning file system..."
 
 $letter = $env:HOMEDRIVE[0]
-chkdsk "${letter}:"
 
 # Turn off hibernation and fast start
 REG ADD "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Power" /V HiberbootEnabled /T REG_DWORD /D 0 /F
@@ -23,14 +22,14 @@ $pagefile.Put()
 #ALT: wmic pagefileset where name="C:\\pagefile.sys" delete
 
 # Cleanup
-Cleanmgr /sagerun:16
-Get-ComputerRestorePoint | Delete-ComputerRestorePoint -WhatIf 
+start-process Cleanmgr /sagerun:16 -wait
+#TODO: Get-ComputerRestorePoint | Delete-ComputerRestorePoint -WhatIf 
 Disable-ComputerRestore -Drive "C:\"
 fsutil usn deletejournal /d /n c:
 vssadmin delete shadows /all /quiet
-Dism /Online /Cleanup-Image /StartComponentCleanup /ResetBase
+#TODO: remove: Dism /Online /Cleanup-Image /StartComponentCleanup /ResetBase
 Disable-WindowsErrorReporting
-Clear-WindowsDiagnosticData -Force
+#Clear-WindowsDiagnosticData -Force
 
 #TODO: REG ADD "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\CrashControl" /V CrashDumpEnabled /T REG_DWORD /D 0 /F
 #TODO: REG ADD "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\Windows Error Reporting" /v Disabled /T REG_DWORD /D 1 /F

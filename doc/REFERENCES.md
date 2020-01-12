@@ -29,6 +29,7 @@
 * https://www.dell.com/support/article/us/en/04/sln151664/how-to-install-ubuntu-linux-on-your-dell-pc
 
 ### Downloads
+
 * https://github.com/unetbootin/unetbootin/blob/master/src/unetbootin/distrolst.cpp
 
 ### ISO
@@ -58,6 +59,10 @@
 
 * http://www.smorgasbork.com/2019/04/23/fedora-windows-10-dual-boot-on-dell-inspiron/
 * https://docs.microsoft.com/en-us/powershell/module/bitlocker/suspend-bitlocker?view=win10-ps
+
+#### Swap file
+* https://serverfault.com/questions/558069/use-wmi-to-remove-a-page-file
+* https://www.c-sharpcorner.com/Blogs/disk-cleanup-using-powershell-scripts
 
 #### MBR
 
@@ -105,6 +110,10 @@
 * https://wikitech.wikimedia.org/wiki/PartMan
 * https://wikitech.wikimedia.org/wiki/PartMan/Auto
 * https://github.com/xpeppers/provisioning-example
+* https://wiki.ubuntu.com/Enterprise/WorkstationAutoinstallPreseed
+* https://help.ubuntu.com/lts/installation-guide/amd64/apbs04.html#preseed-partman
+* 
+
 
 #### Kickstart
 
@@ -121,4 +130,26 @@ These are things that can be used after the install for better integration betwe
 
 * https://www.glump.net/howto/desktop/seamless-remote-linux-desktop-in-windows
 * https://www.reddit.com/r/linuxquestions/comments/e964o5/way_to_reboot_to_windows_from_within_linux/
+
+### Powershell
+
+* https://ss64.com/ps/syntax-elevate.html
+
+#### GUI
+* https://theitbros.com/powershell-gui-for-scripts/
+* https://lazyadmin.nl/powershell/powershell-gui-howto-get-started/
+* https://poshgui.com/Editor
+* https://github.com/MScholtes/PS2EXE
+* https://stackoverflow.com/questions/21607593/powershell-form-layout
+
+#### 7Zip
+* https://superuser.com/questions/42788/is-it-possible-to-execute-a-file-after-extraction-from-a-7-zip-self-extracting-a#42792
+* https://github.com/CommitteeOfZero/lzma-sdk/blob/master/DOC/installer.txt
+* https://www.7-zip.org/download.html
+
+#### Timezone
+* https://github.com/mj1856/TimeZoneConverter
+* https://dejanstojanovic.net/aspnet/2018/july/differences-in-time-zones-in-net-core-on-windows-and-linux-host-os/
+* https://github.com/unicode-org/cldr/blob/master/common/supplemental/windowsZones.xml
+* http://www.unicode.org/cldr/charts/latest/supplemental/zone_tzid.html
 
