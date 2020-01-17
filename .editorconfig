@@ -1,0 +1,22 @@
+root = true
+
+[*]
+indent_style = space
+insert_final_newline = true
+
+[*.{cmd,bat}]
+end_of_line = crlf
+indent_size = 4
+
+[*.{ps1,psm1,psd1}]
+end_of_line = crlf
+indent_size = 4
+trim_trailing_whitespace = true
+
+[*.{ps1xml,props,xml.yaml,yml}]
+indent_size = 2
+
+[*.sh]
+end_of_line = lf
+indent_size = 2
+

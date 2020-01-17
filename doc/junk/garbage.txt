@@ -1,0 +1,577 @@
+This file is for brain-storming.  It's full of junk and garbage.
+WINDOWS TO LINUX
+
+architecture:
+    powershell with System.Windows.Forms
+    powershell core for Linux.  MVP GUI pattern.
+    powershell as DSL for config
+    bundle as exe with elevated privs
+    monkeypatching by plugins to fix issues.
+    Automated testing
+        Can't really do this until we have pre-MVP
+        Test hardware uses HDD
+        Triggered by push to master
+        Everything will be set up to use an http proxy that will cache downloads.
+        Start with full drive image backup, and separate C: partition image backup.
+        Create report of config of partitions and bootmgr
+        Windows script runs on boot.
+            Waits for network trigger to start install.
+            Auto start script downloads current code and runs it with default settings.
+            Any error or warning is recorded.
+            At end, reboot to Linux
+        Linux post-install script
+            chroot into tmpfs file system
+            repartition C: + linux back to original
+            recover backup image to partition
+            Inject auto-run script
+            Change boot manager to original
+            verify partiion table and bootmgr is idential to start
+            reboot
+
+documentation:
+    plugins: how to write a plugin, include external repos.
+    contribute: rules, licensing, todo, roadmap
+    manually.md: how to install manually
+    reference.md: research and background.
+    manually.md: how to do everything it does on the command line, with links and images.
+    support.md
+        include .log file
+            partition table
+            systeminfo
+            boot menu entries.  bcdedit /list
+            errors
+            virtualbox VM report
+            hyper-v status, if any
+    readme.md:
+        support and disclaimers
+
+
+
+repositories:
+    - https://github.com/user/project
+winfs: /mnt/ntfs
+distros:
+    # Only Ubuntu-based distros allowed
+    ubuntu:
+        description: ...
+        iso: ...
+    xubuntu:
+    debian:
+    mint:
+        name: Linux Mint with Cinnamon
+        iso:
+    xmint:
+        name: Linux Mint with Xfce
+importers:
+    wine:
+    vm:
+    
+RootPlugins:
+    - ScannerPlugin
+
+
+
+
+
+-----
+
+name: base
+description: Required by all other plugins
+priority: 0
+packages: [git,ansible,pip,snap]
+status: hidden,always
+
+
+name: Pictures
+usercopy: [Pictures, Documents, Videos]
+
+name: MozillaMaintenanceService
+match: 'Mozilla Maintenance Service'
+status: ignore
+
+-----
+
+# Core properties.
+name: git-bash
+is_ok_dupliate: false
+status: disabled  # disable,always,ignore,backup,primary,hidden.
+  # Must be installed.  Similar
+  # backup=don't install if a dup is available
+  # primary=don't install any dups.  This is best fit.
+  # hidden=do not show in the list of apps.  auto-select.
+time: 12   # Estimated minutes to install
+# Plugin properites
+match:  #file path, or registry, or app name pattern
+    - "$PROGRAMFILE/git"
+match-script: |
+    ...
+wine: []
+# Always install, even if a duplicate.
+match-expr: "python-expression"
+duplicate-of: [git]
+packages: [git]
+snaps: []
+pip: []
+copyhome: [.ssh, .gitconfig, .gitignore]
+#copy: ["from:to"]   # if dest not in $HOME, root:root 644
+# Variables for scripts.  populated by UIs
+environment:
+    name: 'value'
+pre-install: 'bash'
+post-install: |
+    #!/bin/bash
+    if [ -f ~/.ssh/idrsa ]; then chmod 600 ~/.ssh/idrsa; fi
+form:
+#http://docs.yafowil.info/yaml.html
+ansible:
+    ...
+
+
+* Ask:
+  - I already have Linux installed in a partition
+  - I Only have Windows installed.
+  - This is a second attempt to use this program
+* scan
+  - load all plugins into array
+  - for each profile, scan all plugins.  Remember duplicate matches.
+* ask questions
+  - Questions for installers
+  - User file tree to copy
+* Prepare HD: checkpoint, clean up, backup, defrag, repartition
+* start linux VM: install virtualbox, extensions, download iso, automate install, install VM, launch
+* Installs with progress
+  - apt-get update + upgrade
+  - Copy files
+  - Install packages
+
+Use cases
+* Windows to dual-boot Ubuntu  (default goal)
+* Ubuntu VM install.   Install Ubuntu into a VM.
+* Ubuntu is already installed in a partition.  Export Windows config.
+* Ubuntu is on a remote machine.  Export Windows config over ssh.
+
+Post-Install use cases
+* Clean:  Re-run clean, and restore pagefile, hiberfil.sys, etc.
+* Sync:   Sync changes from Windows to Ubuntu
+* Hop:    Change distro, reinstall apps.
+* Revert: Remove Ubuntu and go back to original configuration.
+* Commit: Delete C: partition, grow linux to fill its space.
+
+
+
+class PathMatchPlugin
+    is_match()
+    path:$PROGRAMFILE/git
+class RegistryMatchPlugin
+    REG:...
+class DisplayNameRegexMatchPlugin
+    match: 'NAME:^Greenshot'
+    HKLM/HKCU:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall
+    ignore if no UninstallString
+
+Plugin
+    # Estimated time in minutes to complete task
+    estimate(config)
+    # Does this plugin match this app profile?
+    is_match(profile)
+    # User files that should be copied.
+    user_files(profile)
+    # Workflow Phases
+    # Do any pre-install cleaning or backup.
+    preclean(profile)
+    before_questions(ui, profile)
+    # Ask any questions.  Can modify profile as necessary.
+    gui(ui, profile)
+    # Run before any installs
+    pre_install(profile)
+    # Install this app profile
+    install(profile)
+    # Run after all installs
+    post_install(profile)
+    
+computers/model/brand
+    name:
+    laptop: true
+    (files)
+
+
+UI tabs
+
+Install - main ui
+Script - currently running scripts and progress bar.
+   Past is white, current is yellow, future is gray.
+Log - past script + output
+    buttons: save, files (brower temp files)
+
+
+Steps
+
+[x] Backup
+[x] Clean
+[x] Defrag
+[x] Repartition
+[x] Install
+[x] ...
+
+[MCüç[MCMMCûCÛMC
+
+Advice
+
+Best models for Linux
+* Dell
+* Lenovo
+* IBM Thinkpad
+
+[Abort] [Back] {Continue]
+
+Backup
+
+You should do full backup before continuing.
+Click Abort if you'd like to stop and do a backu.
+
+[Abort] [Back] {Continue]
+[Backup Manager]
+
+Cleanup
+
+We recommend cleaning your hard drive to free up space for the install
+and to temporarily get unmoveable files out of the way.
+
+[x] Disable swap file
+[x] Disable hibernate file
+[x] Remove restore points
+[x] Remove dumps
+[x] Clean temp
+[x] Defragment drive
+
+Swap and hibernate will be reset to their original values after the install is complete.
+
+[Abort] [Back] [Continue]
+
+Preparation steps.
+
+* Cleaning...
+* Checking prerequisites...
+  (64bit, win10, not on battery, not fast boot, enough free space on Windows after clean)
+
+[Abort] [Back] {Continue]
+
+We suggest you back up your system before you being.
+
+Would you like us to perform a backup for you?        ( ) Yes ( ) No
+Would you like us to removed unnecessary files?       (*) Yes ( ) No
+Would you like us to defragment your drive?           (*) Yes ( ) No
+Would you like us to create a new partition for Linux (*) Yes ( ) No
+
+[Abort] [Back] {Continue]
+
+Backup
+
+????
+
+
+[Abort] [Back] [Continue]
+
+Repartition
+
+C: partition size: 120GB
+
+$windows = Resize-Partition -size 70GB   -disknumber 0 -partition 5
+$system  = New-Partition    -size 30GB   -disknumber 0 -offset after-partition($windows)
+$home    = New-Partition -usemaximumsize -disknumber 0 -offset after-partition($system)
+
+
+[Partition Table]
+[Abort] [Back] [Continue]
+
+Distro choice
+
+(*) Mint Cinnamon
+( ) Mint Xfce   (make default if low mem,cpu)
+( ) Ubuntu
+( ) XUbuntu
+( ) KUbuntu
+
+[Abort] [Back] [Continue]
+
+Configurations
+
+[ ] Wallpaper
+[ ] Lock screen
+[ ] Screen saver
+[x] Wifi
+[x] Mouse sensitivity
+[ ] Sounds
+[x] Keyboard
+[x] 
+[ ] VPN
+
+[Abort] [Back] [Continue]
+
+Applications
+
+7 Zip [^]
+Evolution[^]
+Thunderbird
+
+[Abort] [Back] [Continue]
+
+Wine Applications.
+
+These applications are installed but have no Linux counterparts.  They can be run with WINE.
+
+[ ] Photoshop
+
+[Abort] [Back] [Continue]
+
+Additional Applications
+
+[x] Laptop power management   (detect if a laptop)
+[x] Automatic security updates
+[ ] SSH server
+[ ] TeamViewer
+[ ] Steam
+[ ] Synaptec
+[x] MS Fonts
+[x] VLC Media Player
+[ ] zram
+[ ] topgrade
+
+[Abort] [Back] [Continue]
+
+These files user files will be copied to /home/$USER.
+
+Source: C:\Users\$USER  Dest: /home/$USER  Owner: $USER:$USER Mode: 644
+    [ ] AppData
+    [x] Photos
+    [x] .ssh
+        [x] id_rsa
+  
+Source: C:\git  Dest: /home/$USER/git  Owner: $USER:$USER Mode: 644
+  
+(when adding, any dirs, check Windows file ownership and try to mimic)
+
+
+[Abort] [Back] [Continue]
+
+Unmatched Applications
+
+No match was found for these applications, but an application icon was found.  Select which you would like to run inside of the Windows VM.
+
+[ ] Photoshop
+[x] Microsoft Office
+
+[Abort] [Back] [Continue]
+
+Unmatched Applications
+
+No match was found nor was any desktop icon.  No action will be taken to install these applications.
+
+C++ Runtime
+
+[Abort] [Back] [Continue]
+
+Size.
+C: is using ____ GB with ____ GB of free space.
+Linux is estimaged to require ___ GB of space.
+
+How much space do you want to allocate for Linux? ____ GB
+Windows will retain ___ GB of free space.
+
+[x] Install Linux on newly from free space.
+
+[Manage Partitions] [Skip]
+[Abort] [Back] [Continue]
+
+Linux will be installed on drive _0_ partition _6_.
+
+Any data on the partition will be lost.
+
+[Manage Partitions]
+[Abort] [Back] [Continue]
+
+Disclaimer
+
+yada yada yada yada yada
+Not liable
+Won't move everything
+
+[Abort] [Back] [Agree] [Disagree]
+
+Click Continue to start install.
+
+[x] Reboot into Linux after successful install.
+
+[Abort] [Back] [Continue]
+
+Progress
+
+11:35:32 Creating restore point... complete.
+11:35:32 Cleaning up... complete.
+11:35:32 Backing up... complete.
+11:35:32 Defragmenting...
+11:35:32 Repartitioning...
+11:35:32 Installing Libreoffice... complete.
+11:35:32 Copying user files...
+
+[%%%%%%%%%%%%%%%............]
+[%%%%.......................]
+Estiamated completion time: 3:40pm
+
+Done!
+
+You may now reboot to your Linux system.
+
+[Abort] [Back]
+[Exit] [Linux VM] [Reboot]
+
+Detect Secure Boot
+https://www.iceflatline.com/2009/09/how-to-dual-boot-windows-7-and-linux-using-bcdedit/
+
+
+
+
+Version 0.1
+* Many assumptions: Win 10, single C:, virtualbox, dual boot, Mint cinnamon
+* If no "linux" partition, create it with powershell and bcdedit
+* Download and Install ISO to partition.
+* Launch in VM and then force launch of installer.
+* Bash script for installing windows apps and transfering data.
+
+Side idea:  ultimate distro hopper
+* Tiny linux distro boots
+* Grub like menu to choose which distro
+* Menu Option to add one.
+* Common home partition.   contains info on packages to install.
+* Other options: manage partitions, create recovery usb, recover windows.
+
+
+
+
+------ FIRST TRY TO INSTLAL LINUX
+Full image backup using Clonezilla
+Full backup of all partitions from within Windows and do a test restore.
+Defrag and Repartition using Powershell.  Shrink C: and create linux-system and linux-home partitions.
+Install Linux in VirtualBox on the Linux partitions.  Automate the whole thing with powershell and Ubuntu kickstart.
+Use Windows boot manager instead of Grub2 for boot menu.
+Boot to Ubuntu and replace Win boot manager with Grub2 (if possible)
+And then wipe it all and install Void Linux as that's what I want to use.  I might buy another cheap laptop for these experiments.
+
+On Linux, create VirtualBox VM image using WIndows' raw partition.
+
+Final testing:
+Reboot to test all scenarios:  Linux w/Windows VM, Windows w/Linux VM.
+Restore back to beginning.
+
+You can first disable System Protection, System restore files, Fast startup, Hibernation mode, kernel memory dump, and page files as least temporarily. 
+https://www.disk-partition.com/articles/size-of-available-shrink-space-in-mb-0-4348.html
+
+
+Install Linux from Windows?
+
+Looking for feedback.
+
+For fun, I'm going to experiment with installing dual-boot Linux on a Windows Laptop.  I know it's generally considered not possible due to such a thing, but I'd like to at least try.  Where do you think I'd have the biggest issues with this plan?:
+
+------
+Fix
+Quick clean (not hiber,swap)
+Questions (incl. password)
+Clean
+Defrag
+Reboot and Continue (w/o user intervention)
+Defrag
+Questions
+Repartition
+Download io
+Download/install VirtualBox
+Create VM
+ Installing
+ App installation
+ grub
+Reboot to Linux w/auto-login
+Disable auto-login
+Alarm and notice of completion
+
+---- RECENT
+
+Testing:
+* ./install-tools
+* use vagrant build of windows VMs
+* install stuff into the VM
+* include a very simple http server and modify hosts file
+* use as a snapshot from there
+* mapping to linux home dir
+* script to tell vagrant to use snapshot
+
+0.0.1 - not reliable, but usable.
++NSIS installer
++check freespace.  tell user they need to free up space.
++mbr2gpt + ISO partition
++download ISO
++reboot (to ubiquity)
+
+0.0.2
++enable swap (if previously disabled)
+ clear space
+/check freespace.  disable swap and tell user to reboot and try again.
+ mbr2gpt + ISO partition
+ download ISO
+ reboot (to ubiquity)
+ 
+0.1.0 - MVP
+ enable swap (if previously disabled)
+ clear space
++ask user: disk space
+ check freespace.  disable swap and tell user to reboot and try again.
+ mbr2gpt + ISO partition
++shrink C:
++generate preseed values for simple install.  No auto-approve
+ download ISO
+ reboot (to ubiquity)
+
+0.1.1
+ enable swap (if previously disabled)
++skip to partition step if this is 2nd run.
+ clear space.
++checkpoint.
+ ask user: disk space.
+ mbr2gpt + ISO partition
++shrink C:
+/generate preseed values.  Will auto-approve, reboot, delete ISO post-install
+ download ISO
+ reboot (to ubiquity)
+
+* Pull down list of mirrors from site
+* Ping each with timeout.
+* use random 4 for download.  use aria2 for download
+* separate fat32 partition: no other files.
+* run in background
+* resume as needed (reboots)
+
+TOP TODO: preseed
+# https://help.ubuntu.com/lts/installation-guide/example-preseed.txt
+d-i partman-auto/init_automatically_partition select biggest_free
+d-i partman-auto/choose_recipe select atomic
+
+ps1 tempalte - https://gist.github.com/9to5IT/9620683
+template engine - $ExecutionContext.InvokeCommand.ExpandString((get-content "preseed.cfg.tpl"))
+
+clean
+disable-swap
+defrag
+mbr2gpt
+download-iso
+iso part
+mount-iso
+install-grub
+- grub files
+- grub.cfg
+- preseed.cfg
+- bcdedit
+umount-iso
+repartition
+enable-swap
+cleanup
+- delete iso
+- delete iso part
