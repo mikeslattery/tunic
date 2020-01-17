@@ -2,49 +2,41 @@
 
 if( $args[0] -eq 'noop') { exit } # for syntax checking
 
-$iso_url='http://mirrors.kernel.org/linuxmint/stable/19.2/linuxmint-19.2-cinnamon-64bit.iso'
+$global:iso_url='http://mirrors.kernel.org/linuxmint/stable/19.2/linuxmint-19.2-cinnamon-64bit.iso'
+$global:shim_url = 'https://github.com/pop-os/iso/blob/master/data/efi/shimx64.efi.signed?raw=true'
 
-$letter = $env:HOMEDRIVE[0]
-$root_dir="${letter}:"
-$tunic_dir="${env:ALLUSERSPROFILE}\tunic"
-$tunic_data="${tunic_dir}"
-$iso = "${tunic_data}\linux.iso"
+$global:letter = $env:HOMEDRIVE[0]
+$global:root_dir="${letter}:"
+$global:tunic_dir="${env:ALLUSERSPROFILE}\tunic"
+$global:tunic_data="${tunic_dir}"
+$global:iso = "${tunic_data}\linux.iso"
 
-$MIN_DISK_FB = 15
+$global:MIN_DISK_FB = 15
+
 
 # Do very basic initialization
-function init() {
-    mkdir "$tunic_dir" -force | out-null
+if ( -not (Test-Path "$global:tunic_dir") ) {
+    mkdir "$global:tunic_dir" | out-null
 }
 
 # Disable swap, hibernate, restore, error reports, dumps
 function disableSwap() {
     Write-Host "Disabling swap..."
+
     # Turn off hibernation and fast start
-    REG ADD "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Power" /V HiberbootEnabled /T REG_DWORD /D 0 /F
     powercfg.exe /h off
+    REG ADD "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Power" /V HiberbootEnabled /T REG_DWORD /D 0 /F
+
     # Disable swap
     $computersys = Get-WmiObject Win32_ComputerSystem -EnableAllPrivileges
     $computersys.AutomaticManagedPagefile = $False
     $computersys.Put()
-    #TODO: failed: wmic pagefile delete
 
-#TODO: custom size
-    $pagefile = gwmi win32_pagefilesetting
+    $pagefile = Get-WmiObject win32_pagefilesetting
     $pagefile.delete()
 
-    #$pagefile = Get-WmiObject -Query "Select * From Win32_PageFileSetting Where Name like '%pagefile.sys'"
-    #$pagefile.InitialSize = 0
-    #$pagefile.MaximumSize = 0
-    #$pagefile.Put()
-    #ALT: delete or move pagefile.sys
-    #wmic computersystem set AutomaticManagedPagefile=False
-    #wmic pagefileset where name="C:\pagefile.sys" delete
-
-    #TODO: REG ADD "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\CrashControl" /V CrashDumpEnabled /T REG_DWORD /D 0 /F
-    #TODO: REG ADD "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\Windows Error Reporting" /v Disabled /T REG_DWORD /D 1 /F
     Disable-WindowsErrorReporting
-    Disable-ComputerRestore -Drive "C:\"
+    Disable-ComputerRestore -Drive "${global:root_dir}"
 
     Write-Host "Swap disabled."
 }
@@ -60,90 +52,79 @@ function enableSwap() {
     wmic pagefileset where name="C:\\pagefile.sys" set InitialSize=2048,MaximumSize=2048
     wmic computersystem set AutomaticManagedPagefile=True
 
-    # Enable Hibernate
-    REG ADD "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Power" /V HiberbootEnabled /T REG_DWORD /D 1 /F
+    # Enable Hibernate (but not fast start)
     # TODO: see if hibernate is support and/or if it was on before.
     powercfg.exe /h on
 }
 
-function clean() {
-    # Turn off swap
-    Write-Host "Cleaning file system..."
-
-    $letter = $env:HOMEDRIVE[0]
-
-    # Cleanup
-    Cleanmgr /sagerun:16
-    Get-ComputerRestorePoint | Delete-ComputerRestorePoint
-    fsutil usn deletejournal /d /n "${letter}:"
-    vssadmin delete shadows /all /quiet
-    Dism /Online /Cleanup-Image /StartComponentCleanup /ResetBase
-    Clear-WindowsDiagnosticData -Force
-
-    #TODO: chkdsk "${letter}:"
-
-    Write-Host "Clean done."
-}
-
 function defrag() {
-    Write-Host "Defragmenting disk..."
     powercfg.exe /h off
     REG ADD "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Power" /V HiberbootEnabled /T REG_DWORD /D 0 /F
-    Optimize-Volume -DriveLetter $letter -Defrag
-    powercfg.exe /h on
+    Optimize-Volume -DriveLetter $global:letter -Defrag
+    #TODO: powercfg.exe /h on - if was on before
 }
 
-function backupEfi() {
-     param([string]$file)
-     #TODO: from repartition.ps1
+function die($msg) {
+    write-host $msg
+    [System.Windows.Forms.Messagebox]::Show($msg)
+    exit 1
+}
+
+function yes($q) {
+    $buttons = [System.Windows.Forms.MessageBoxButtons]::OKCancel
+    return [System.Windows.Forms.MessageBox]::Show("Message Text","Title", $buttons )
+}
+
+function openUrl($url) {
+    [System.Diagnostics.Process]::Start($url)
 }
 
 # Returns true if Linux can be installed.
 function checks() {
-    #[System.Environment]::Is64BitOperatingSystem -and `
-    #[System.Environment]::OSVersion.version.major >= 10 -and `
-    #[System.Environment]::Version.major >= 3 -and `
-    #([Security.Principal.WindowsPrincipal] `
-    #  [Security.Principal.WindowsIdentity]::GetCurrent() `
-    #).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator) -and `
-    #(get-disk -number $partc.diskNumber).partitionStyle -eq 'MBR')
-    #TODO: doesn't work in VM: Confirm-SecureBootUEFI
-    # existence of all pwsh lib functions
-    # Bitlocker:
-    #$BLinfo = Get-Bitlockervolume
-    #if($blinfo.ProtectionStatus -eq 'On' -and $blinfo.EncryptionPercentage -eq '100'){
-    #    write-output "'$env:computername - '$($blinfo.MountPoint)' is encrypted"
-    #}
-}
+    if( !([Security.Principal.WindowsPrincipal] `
+          [Security.Principal.WindowsIdentity]::GetCurrent() `
+        ).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator) ) {
+        die( 'Must be an Administrator to run tunic' )
+    }
 
-function checkSpace() {
-    # enough space for windows.  for linux.
-    # plus iso x2
-}
+    if( ! [System.Environment]::Is64BitOperatingSystem ) {
+        die( 'Only 64 bit systems supported' )
+    }
+        
+    if( ! [System.Environment]::OSVersion.version.major -ge 10 ) {
+        die( 'Only Windows 10 supported' )
+    }
 
-function toEfi() {
-    $partc = get-partition -driveletter C 
+    if( [System.Environment]::Version.major -lt 3 ) {
+        die( 'Powershell 3 or above required' )
+    }
+
+    $partc = ( get-partition -driveLetter $global:letter )
     if( (get-disk -number $partc.diskNumber).partitionStyle -eq 'MBR' ) {
-        Write-host "Converting from MBR to GPT..."
-        #backupMbr
-        mbr2gpt /validate /allowfullos
-        mbr2gpt /convert  /allowfullos
+        if( yes('UEFI required.  Would you like to read how to convert form MBR to EFI') ) {
+            openUrl('https://www.windowscentral.com/how-convert-mbr-disk-gpt-move-bios-uefi-windows-10')
+        }
+        exit 1
+    }
+        
+    $blInfo = Get-Bitlockervolume
+    if( $blInfo.ProtectionStatus -eq 'On' ) {
+        die( 'Bitlocker encrypted drive not supported.' )
     }
 }
 
 function downloadIso() {
-    if ( -not (Test-Path "$iso") ) {
+    if ( -not (Test-Path "$global:iso") ) {
         $ciso = 'Z:\Downloads\linuxmint-19.2-cinnamon-64bit.iso'
         if ( Test-Path "$ciso" ) {
-            Write-host "Copying ISO..."
-            copy "$ciso" "$iso"
+            copy "$ciso" "$global:iso"
         } else {
-            Write-host "Downloading ISO... (this takes a long time)"
             try {
-                (New-Object System.Net.WebClient).DownloadFile($iso_url, "$iso")
+                (New-Object System.Net.WebClient).DownloadFile($global:iso_url, "$global:iso")
+                #TODO: save to temp and move after.
                 #TODO: verify integrity
             } catch {
-                Remove-Item "$iso"
+                Remove-Item "$global:iso"
                 Throw "Download failed"
             }
         }
@@ -152,7 +133,6 @@ function downloadIso() {
 
 # Returns the Linux timezone converted from Windows.
 function getLinuxTimeZone() {
-
     # Download and load list of timezones
 
     $url = 'https://raw.githubusercontent.com/unicode-org/cldr/master/common/supplemental/windowsZones.xml'
@@ -166,30 +146,54 @@ function getLinuxTimeZone() {
 
     # Get Windows timezone and country code.
 
-    $wtz = (get-timezone).id
+    $wtz = (get-timezone)
+    $tzName = $wtz.id
     $territory = (New-Object System.Globalization.RegionInfo (Get-Culture).Name).TwoLetterISORegionName
 
-    # Scan for Linux equivalent
+    $zones = ($nodes | where-object { $_.other -eq $tzName } )
+    if( $zones.count -eq 1 ) {
+        $ltz = $zones[0].type
+    } elseif( $zones.count -gt 1 ) {
 
-    $ltz =     ($nodes | where-object { $_.other -eq $wtz -and $_.territory -eq $territory } ).type
-    if( ! $ltz ) {
-        # Direct hit failed.  Use the generic territory, 001.  This is most common case.
-        $ltz = ($nodes | where-object { $_.other -eq $wtz -and $_.territory -eq '001' } ).type
+        # Scan for exact Linux equivalent
+        $ltz = ($zones | where-object { $_.territory -eq $territory } ).type
+        if( ! $ltz ) {
+            # Direct hit failed.  Use the generic territory.  This is most common case.
+            $ltz = ($zones | where-object { $_.territory -eq '001' } ).type
+        }
+
+        # Sloppy match
+        $ltz = $zones[0].type
     }
-    if( ! $ltz ) {
-        # Any match by name.
-        $ltz = ($nodes | where-object { $_.other -eq $wtz } | select -first 1 ).type
-    }
-    if( ! $ltz ) {
-        $ltz = 'UTC'
+    else {
+        # Match by GMT and hour difference.
+        $offset = - $wtz.baseUtcOffset.totalHours
+        if( $offset -eq [math]::floor($offset) -and `
+                -12 -le $offset -and $offset -le 12 -and `
+                $offset -ne 0 ) {
+
+            if( $offset -gt 0 ) {
+                $ltz = "Etc/GMT-${offset}"
+            } else {
+                $ltz = "Etc/GMT+${offset}"
+            }
+        }
+        else {
+            # We give up.  This should never happen.
+            $ltz = "UTC"
+        }
     }
 
     return $ltz
 }
 
-function installGrub() {
-    Write-host "Installing Grub..."
+function expandTemplate($filename) {
+    $str = ( get-content -path "$filename" )
+    $str = $str.split("`n") -join "``n"
+    return $ExecutionContext.InvokeCommand.ExpandString( $str )
+}
 
+function installGrub() {
     # TODO: allocate drive letter.  try..finally
     #$efi = (ls function:[d-z]: -n | ?{ !(test-path $_) } | random)
     $efi = "S:"
@@ -201,27 +205,25 @@ function installGrub() {
         $usb = "$(( mount-diskimage -imagepath "$iso" | get-volume ).driveletter):"
         # Grub
         mkdir "${efi}\boot\grub" -force | out-null
-        #TODO: shimx64.efi (shim*.deb file).
         copy "${usb}\boot\grub\x86_64-efi" "${efi}\boot\grub\." -recurse
         copy "${usb}\EFI\BOOT\grubx64.efi" "${efi}\boot\grub\."
+        #TODO: use grubx64 if secureboot is not enabled
+        (New-Object System.Net.WebClient).DownloadFile($shim_url, "${efi}\boot\grub\shimx64.efi")
         copy "files\grub.cfg" "${efi}\boot\grub\."
         # Preseed
-        copy "files\preseed.cfg" "${tunic_dir}\."
-        # iso
-        #TODO: remove if iso loopback works
-        #Write-host "Copying ISO..."
-        copy "${usb}\*" "${root_dir}\." -recurse
+        set-content -value (expandTemplate "files\preseed.cfg") -path "${global:tunic_dir}\preseed.cfg"
 
-        dismount-diskimage -imagepath "$iso" | out-null
+        dismount-diskimage -imagepath "$global:iso" | out-null
     }
 
+    if ( -not (Test-Path "${global:tunic_dir}\bcd-before.bak" ) ) {
+        bcdedit /export "${global:tunic_dir}\bcd-before.bak"
+    }
+
+    #TODO: idempotent
     $osloader = (bcdedit /copy '{bootmgr}' /d ubuntu).replace('The entry was successfully copied to ','').replace('.','')
     bcdedit /set         "$osloader" device "partition=$efi"
-    if ( Test-Path "$efi\boot\grub\shimx64.efi" ) {
-        bcdedit /set         "$osloader" path \boot\grub\shimx64.efi
-    } else {
-        bcdedit /set         "$osloader" path \boot\grub\grubx64.efi
-    }
+    bcdedit /set         "$osloader" path \boot\grub\shimx64.efi
     bcdedit /set         "$osloader" description "Linux ISO"
     bcdedit /deletevalue "$osloader" locale
     bcdedit /deletevalue "$osloader" inherit
@@ -233,285 +235,145 @@ function installGrub() {
     bcdedit /set '{fwbootmgr}' displayorder "$osloader" /addfirst
 
     mountvol $efi /d
+
+    bcdedit /export "${global:tunic_dir}\bcd-grub.bak"
 }
 
-function getInfo() {
-    $c_part = (get-partition -driveletter $letter)[0]
-    $c_minsize = (get-partitionsupportedsize -driveletter $letter).sizeMin
-    @{
-        disk = $c_part.diskNumber;
-        letter = $letter;
-        number = $c_part.partitionNumber;
-        size = $c_part.size;
-        free = (get-volume -driveletter $letter).sizeRemaining;
-        available = ($c_part.size - $c_minsize);
-        offset = $c_part.offset
-    }
-}
+# Calculates globals gap and maxAvailable
+function calcPartition() {
+    $letter = $global:letter
+    $global:partc = (get-partition -driveletter $letter)
+    $disk = (get-disk -number $global:partc.diskNumber)
 
-function createIsoPartition() {
-    param([int] $space)
-
-    Write-Host 'Mounting ISO...'
-
-    # Gather stats
-    $info = getInfo
-    $iso_size = ( get-childitem -path "$iso" ).length
-    $iso_offset = $info.offset + $info.size - $iso_size
-
-    if( $info.available -lt $iso_size ) {
-        throw "Not enough space to create ISO partition"
-    }
-
-    # Partitioning
-    $c_size = ( $info.size - $iso_size - $space )
-    resize-partition `
-        -diskNumber $info.disk `
-        -partitionNumber $info.number `
-        -size $c_size
-
-    $iso_part = new-partition `
-        -disknumber $info.disk `
-        -assignDriveLetter `
-        -offset $iso_offset -size $iso_size
-
-    # Copy ISO
-    $iso_part | format-volume -fileSystem FAT32
-
-    #TODO: mount iso
-    $usb = "${iso_part.driveLetter}:"
-
-    copy "$iso" "$usb" -recurse
-
-    #TODO: umount
-
-    $iso_part.partitionNumber 
-}
-
-# Because PS sucks, we need to make these global.
-
-Add-Type -AssemblyName System.Windows.Forms
-[System.Windows.Forms.Application]::EnableVisualStyles()
-
-$main = New-Object system.Windows.Forms.TableLayoutPanel
-$sizeLabel = New-Object system.Windows.Forms.Label
-$TotalValue = New-Object system.Windows.Forms.Label
-$usedValue = New-Object system.Windows.Forms.Label
-$freeValue = New-Object system.Windows.Forms.Label
-$availValue = New-Object system.Windows.Forms.Label
-$LinuxSize = New-Object system.Windows.Forms.TextBox
-$username = New-Object system.Windows.Forms.TextBox
-$password = New-Object system.Windows.Forms.TextBox
-$password2 = New-Object system.Windows.Forms.TextBox
-$hostname = New-Object system.Windows.Forms.TextBox
-$agreeBox = New-Object system.Windows.Forms.CheckBox
-$installbutton = New-Object system.Windows.Forms.Button
-
-$progress = New-Object system.Windows.Forms.TableLayoutPanel
-$defragStatus = New-Object system.Windows.Forms.Label
-$partStatus = New-Object system.Windows.Forms.Label
-$dlStatus = New-Object system.Windows.Forms.Label
-$grubStatus = New-Object system.Windows.Forms.Label
-$rebootStatus = New-Object system.Windows.Forms.Label
-
-function calcGui() {
-    $letter = $env:HOMEDRIVE[0]
-    $volume = (Get-Volume -driveletter $letter)
-    $partc = (get-partition -driveletter $letter)
-    $partnext = (get-partition -disknumber $partc.disknumber | where-object { $_.partitionNumber -eq ($partc.partition + 1)})
-    if( !! $partnext ) {
-        $gap = 0
+    # Calculate Gap
+    $partnext = (get-partition -disknumber $global:partc.disknumber | where-object { $_.partitionNumber -eq ($global:partc.partitionNumber + 1)})
+    if( ! $partnext ) {
+        #TODO: figure out hey -1MB needed
+        $global:gap = $disk.size - ( $global:partc.offset + $global:partc.size ) - 1MB
     } else {
-        $gap = $partnext.offset - ( $partc.offset + $partc.size )
+        $global:gap = $partnext.offset - ( $global:partc.offset + $global:partc.size )
     }
-    $total = [math]::round( $volume.size / 1GB )
-    $free  = [math]::round( ($volume.sizeremaining + $gap) / 1GB )
-    $avail = [math]::floor( ( (get-partitionsupportedsize -driveletter "$letter").sizeMin + $gap ) / 1GB)
-    # Used by windows.  (gap is not part of calculation)
-    $used  = [math]::round( ( $volume.size - $volume.sizeRemaining ) / 1GB )
 
-    $sizeLabel.text  = "${letter}: Drive"
+    # Calculate available
+    $global:maxAvailable = $global:partc.size - (get-partitionsupportedsize -driveletter "$letter").sizeMin + $global:gap
 
-    $totalValue.text = "$total GB"
-    $freeValue.text  = "$free GB"
-    $usedValue.text  = "$used GB"
-    $availValue.text = "$avail GB"
-
-    if( ! $linuxSize.text ) {
-        $linuxSize.text = "$(( [math]::max( $MIN_DISK_GB, [math]::min( [math]::floor($total / 2) , $avail ) ) ))"
-    }
+    #TODO: remove
+    write-host "$($partc.partitionNumber) partc.offset,size $($partc.offset / 1GB),$($partc.size / 1GB) next.offset $($partnext.offset / 1GB) disk.size $($disk.size / 1GB) gap $($global:gap / 1GB) avail $($global:maxAvailable / 1GB)"
+    write-host "$($partc.partitionNumber) partc.offset,size $($partc.offset),$($partc.size) next.offset $($partnext.offset) disk.size $($disk.size) gap $($global:gap) avail $($global:maxAvailable)"
 }
 
-# Returns desired size of windows partition
-function getPreferredSize() {
-    $partc = (get-partition -driveletter $letter)
-    $partnext = (get-partition -disknumber $partc.disknumber | where-object { $_.partitionNumber -eq ($partc.partitionNumber + 1)})
-    if( !! $partnext ) {
-        $gap = 0
-    } else {
-        $gap = $partnext.offset - ( $partc.offset + $partc.size )
-    }
+function repartition() {
+    $letter = $global:letter
+    $global:partc = (get-partition -driveletter $letter)
 
     # size entered in GUI
-    $linuxSizeNum = [double]::parse( $linuxSize.text ) * 1GB
-    # partition gap is already available
-    $winShrink = [math]::max([double]0, $linuxSizeNum - $gap )
+    $linuxSizeNum = [double]::parse( $global:linuxSize.text ) * 1GB
 
-    return $partc.size - $winShrink
+    $shrinkBy = $linuxSizeNum - $global:gap
+
+    $newSize = $global:partc.size - ( $shrinkBy )
+
+    #TODO: remove
+    write-host "lsize $linuxSizeNum partc.size $( $global:partc.size ) shrinkBy $shrinkBy size $newSize"
+
+    if( $shrinkBy -gt 0 ) {
+        resize-partition -driveletter $letter -size $newSize
+    }
 }
 
-# Create the partition gap
-function createLinuxSpace() {
-    $letter = $env:HOMEDRIVE[0]
-    $newPartSize = (getPreferredSize)
+function calcGui() {
+    calcPartition
 
-    resize-partition -driveletter $letter -size $newPartSize
+    $letter = $global:letter
+    $volume = (Get-Volume -driveletter $letter)
 
-    #$partc = (get-partition -driveletter $letter)
-    #new-partition -disknumber $partc.diskNumber -offset ( $partc.offset + $partc.size ) -usemaximumsize
+    $total = [math]::round( $volume.size / 1GB )
+    $free  = [math]::round( $volume.sizeremaining / 1GB )
+    $used  = [math]::round( ( $volume.size - $volume.sizeRemaining ) / 1GB )
+    $avail = [math]::floor( $global:maxAvailable / 1GB )
+
+    $global:sizeLabel.text  = "${letter}: Drive"
+
+    $global:totalValue.text = "$total GB"
+    $global:freeValue.text  = "$free GB"
+    $global:usedValue.text  = "$used GB"
+    $global:availValue.text = "$avail GB"
+
+    if( ! $global:linuxSize.text ) {
+        $global:linuxSize.text = "$(( [math]::max( $global:MIN_DISK_GB, [math]::min( [math]::floor($total / 2) , $avail ) ) ))"
+    }
+}
+
+function initFields() {
+    checks
+    calcGui
+
+    $userInfo = ( Get-WMIObject Win32_UserAccount | where caption -eq (whoami) )
+    $fullname.text = $userInfo.fullName
+    $username.text = $userInfo.name.toLower()
+    $hostname.text = $userInfo.psComputerName
 }
 
 function checkFields() {
-    $main.enabled = $false
+    $global:main.enabled = $false
 
     if( $password.text.length -eq 0 ) {
         [Void][System.Windows.Forms.Messagebox]::Show("Password required.")
-        $main.enabled = $true
-        [Void]$password.focus()
+        $global:main.enabled = $true
+        [Void]$global:password.focus()
         return $false
     }
 
-    if( $password.text -ne $password2.text ) {
+    if( $global:password.text -ne $global:password2.text ) {
         [Void][System.Windows.Forms.Messagebox]::Show("Passwords don't match")
-        $main.enabled = $true
-        [Void]$password.focus()
+        $global:main.enabled = $true
+        [Void]$global:password.focus()
         return $false
     }
 
-    if( ! $agreeBox.checked ) {
+    if( ! $global:agreeBox.checked ) {
         [Void][System.Windows.Forms.Messagebox]::Show("You must agree to terms to continue.")
-        $main.enabled = $true
-        [Void]$agreeBox.focus()
+        $global:main.enabled = $true
+        [Void]$global:agreeBox.focus()
         return $false
     }
 
-    $linuxSizeNum = [double]::parse( $linuxSize.text ) * 1GB
-    if( $linuxSizeNum -lt $MIN_DISK_GB * 1GB ) {
+    $linuxSizeNum = [double]::parse( $global:linuxSize.text ) * 1GB
+    if( $linuxSizeNum -lt $global:MIN_DISK_GB * 1GB ) {
         [Void][System.Windows.Forms.Messagebox]::Show("Linux requires at least ${MIN_DISK_GB}GB")
-        $main.enabled = $true
-        [Void]$linuxSize.focus()
+        $global:main.enabled = $true
+        [Void]$global:linuxSize.focus()
         return $false
     }
 
-    $letter = $env:HOMEDRIVE[0]
-    $avail = (get-partitionsupportedsize -driveletter "$letter").sizeMin
-    if( $linuxSizeNum -gt $avail ) {
+    if( $linuxSizeNum -gt $global:maxAvailable ) {
         [Void][System.Windows.Forms.Messagebox]::Show("Not enough available space.")
-        $main.enabled = $true
-        [Void]$linuxSize.focus()
+        $global:main.enabled = $true
+        [Void]$global:linuxSize.focus()
         return $false
     }
 
-    $main.enabled = $true
+    $global:main.enabled = $true
     return $true
 }
 
 function gui() {
 
+    Add-Type -AssemblyName System.Windows.Forms
+    [System.Windows.Forms.Application]::EnableVisualStyles()
+
     $Form                   = New-Object system.Windows.Forms.Form
     $Form.text              = "Tunic Linux Mint Installer"
     $Form.autosize          = $true
 
-    # Progress Panel
-
-    $progress.autosize          = $true
-    $progress.Dock              = [System.Windows.Forms.DockStyle]::Fill
-    $progress.padding           = 10
-    $progress.columnCount       = 1
-    $progress.visible       = $false
-    #TODO: progress fields
-    #TODO: use job to run in background.
-    #TODO: Stop button
-
-    # Requirement Status Panel
-
-    $StatusPanel              = New-Object system.Windows.Forms.TableLayoutPanel
-    $StatusPanel.BackColor    = "#e3d7ed"
-    $StatusPanel.autosize     = $true
-    $StatusPanel.Dock         = [System.Windows.Forms.DockStyle]::Fill
-    $StatusPanel.padding      = 5
-    $StatusPanel.columnCount  = 2
-    $row = 0
-
-    $defragLabel             = New-Object system.Windows.Forms.Label
-    $defragLabel.text        = "Defragment"
-    $defragLabel.AutoSize    = $true
-
-    $defragStatus.text        = "To Do"
-    $defragStatus.AutoSize    = $true
-
-    $statusPanel.controls.add($defragLabel, 0, $row)
-    $statusPanel.controls.add($defragStatus, 1, $row)
-    $row++
-
-    $partLabel             = New-Object system.Windows.Forms.Label
-    $partLabel.text        = "Re-Partition"
-    $partLabel.AutoSize    = $true
-
-    $partStatus.text        = "To Do"
-    $partStatus.AutoSize    = $true
-
-    $statusPanel.controls.add($partLabel, 0, $row)
-    $statusPanel.controls.add($partStatus, 1, $row)
-    $row++
-
-    $dlLabel             = New-Object system.Windows.Forms.Label
-    $dlLabel.text        = "Download"
-    $dlLabel.AutoSize    = $true
-
-    $dlStatus.text        = "To Do"
-    $dlStatus.AutoSize    = $true
-
-    $statusPanel.controls.add($dlLabel, 0, $row)
-    $statusPanel.controls.add($dlStatus, 1, $row)
-    $row++
-
-    $grubLabel             = New-Object system.Windows.Forms.Label
-    $grubLabel.text        = "Install Grub"
-    $grubLabel.AutoSize    = $true
-
-    $grubStatus.text        = "To Do"
-    $grubStatus.AutoSize    = $true
-
-    $statusPanel.controls.add($grubLabel, 0, $row)
-    $statusPanel.controls.add($grubStatus, 1, $row)
-    $row++
-
-    $rebootLabel             = New-Object system.Windows.Forms.Label
-    $rebootLabel.text        = "Reboot"
-    $rebootLabel.AutoSize    = $true
-
-    $rebootStatus.text        = "To Do"
-    $rebootStatus.AutoSize    = $true
-
-    $statusPanel.controls.add($rebootLabel, 0, $row)
-    $statusPanel.controls.add($rebootStatus, 1, $row)
-    $row++
-
-    $progress.controls.add($statusPanel)
-
-    #TODO: button panel - Abort
-    $progress.controls.add( (New-Object system.Windows.Forms.Label) )
-
-    $form.controls.add($progress)
-
     # Main Input Panel
-
+    $global:main = New-Object system.Windows.Forms.TableLayoutPanel
     $main.autosize          = $true
     $main.Dock              = [System.Windows.Forms.DockStyle]::Fill
     $main.padding           = 10
     $main.columnCount       = 1
 
+    $global:sizeLabel = New-Object system.Windows.Forms.Label
     $sizeLabel.text         = "C: Drive"
     $sizeLabel.AutoSize     = $true
 
@@ -529,6 +391,7 @@ function gui() {
     $totalLabel.text        = "Total Size"
     $totalLabel.AutoSize    = $true
 
+    $global:TotalValue = New-Object system.Windows.Forms.Label
     $TotalValue.text        = "0 GB"
     $TotalValue.AutoSize    = $true
 
@@ -540,6 +403,7 @@ function gui() {
     $UsedLabel.text                  = "Used by Windows"
     $UsedLabel.AutoSize              = $true
 
+    $global:usedValue = New-Object system.Windows.Forms.Label
     $usedValue.text                  = "0 GB"
     $usedValue.AutoSize              = $true
 
@@ -551,6 +415,7 @@ function gui() {
     $FreeLabel.text                  = "Free"
     $FreeLabel.AutoSize              = $true
 
+    $global:freeValue = New-Object system.Windows.Forms.Label
     $freeValue.text                   = "0 GB"
     $freeValue.AutoSize               = $true
 
@@ -562,6 +427,7 @@ function gui() {
     $availLabel.text                  = "Available"
     $availLabel.AutoSize              = $true
 
+    $global:availValue = New-Object system.Windows.Forms.Label
     $availValue.text                   = "0 GB"
     $availValue.AutoSize               = $true
 
@@ -573,6 +439,7 @@ function gui() {
     $LinuxLabel.text        = "Linux Size"
     $LinuxLabel.AutoSize    = $true
 
+    $global:LinuxSize = New-Object system.Windows.Forms.TextBox
     $LinuxSize.multiline    = $false
     $LinuxSize.AutoSize     = $true
     $LinuxSize.width        = 30
@@ -622,6 +489,7 @@ function gui() {
     $usernameLabel.text               = "User Name"
     $usernameLabel.AutoSize           = $true
 
+    $global:username = New-Object system.Windows.Forms.TextBox
     $username.multiline              = $false
     $username.AutoSize           = $true
     $username.tabStop           = $false
@@ -634,6 +502,7 @@ function gui() {
     $passwordLabel.text               = "Password"
     $passwordLabel.AutoSize           = $true
 
+    $global:password = New-Object system.Windows.Forms.TextBox
     $password.passwordChar           = '*'
     $password.multiline              = $false
     $password.AutoSize           = $true
@@ -646,6 +515,7 @@ function gui() {
     $password2Label.text               = "Password, again"
     $password2Label.AutoSize           = $true
 
+    $global:password2 = New-Object system.Windows.Forms.TextBox
     $password2.passwordChar           = '*'
     $password2.multiline              = $false
     $password2.AutoSize           = $true
@@ -654,10 +524,24 @@ function gui() {
     $idPanel.controls.add($password2, 1, $row)
     $row++
 
+    $fullNameLabel                   = New-Object system.Windows.Forms.Label
+    $fullNameLabel.text              = "Full Name"
+    $fullNameLabel.AutoSize          = $true
+
+    $global:fullName = New-Object system.Windows.Forms.TextBox
+    $fullName.multiline              = $false
+    $fullName.AutoSize          = $true
+    $fullName.tabStop           = $false
+
+    $idPanel.controls.add($fullNameLabel, 0, $row)
+    $idPanel.controls.add($fullName, 1, $row)
+    $row++
+
     $hostnameLabel                   = New-Object system.Windows.Forms.Label
     $hostnameLabel.text              = "Computer Name"
     $hostnameLabel.AutoSize          = $true
 
+    $global:hostname = New-Object system.Windows.Forms.TextBox
     $hostname.multiline              = $false
     $hostname.AutoSize          = $true
     $hostname.tabStop           = $false
@@ -668,6 +552,7 @@ function gui() {
 
     $main.controls.add($idPanel)
 
+    $global:agreeBox = New-Object system.Windows.Forms.CheckBox
     $agreeBox.Dock         = [System.Windows.Forms.DockStyle]::Fill
     $agreeBox.text              =
         "I understand this software could cause data loss " +
@@ -687,6 +572,7 @@ function gui() {
     $abortButton.tabStop           = $false
     $buttonPanel.controls.add($abortButton)
 
+    $global:installbutton = New-Object system.Windows.Forms.Button
     $installbutton.text              = "Continue"
     $buttonPanel.controls.add($installButton)
 
@@ -694,41 +580,135 @@ function gui() {
 
     $form.controls.add($main)
 
-    # Default feild values
-    calcGui
+    # Progress Panel
 
-    $username.text = [System.Environment]::UserName
-    $hostname.text = [System.Environment]::MachineName
+    $global:progress = New-Object system.Windows.Forms.TableLayoutPanel
+    $progress.autosize          = $true
+    $progress.Dock              = [System.Windows.Forms.DockStyle]::Fill
+    $progress.padding           = 10
+    $progress.columnCount       = 1
+    $progress.visible       = $false
+    #TODO: progress fields
+    #TODO: use job to run in background.
+    #TODO: Stop button
+
+    # Requirement Status Panel
+
+    $StatusPanel              = New-Object system.Windows.Forms.TableLayoutPanel
+    $StatusPanel.BackColor    = "#e3d7ed"
+    $StatusPanel.autosize     = $true
+    $StatusPanel.Dock         = [System.Windows.Forms.DockStyle]::Fill
+    $StatusPanel.padding      = 5
+    $StatusPanel.columnCount  = 2
+    $row = 0
+
+    $defragLabel             = New-Object system.Windows.Forms.Label
+    $defragLabel.text        = "Defragment"
+    $defragLabel.AutoSize    = $true
+
+    $global:defragStatus = New-Object system.Windows.Forms.Label
+    $defragStatus.text        = "To Do"
+    $defragStatus.AutoSize    = $true
+
+    $statusPanel.controls.add($defragLabel, 0, $row)
+    $statusPanel.controls.add($defragStatus, 1, $row)
+    $row++
+
+    $partLabel             = New-Object system.Windows.Forms.Label
+    $partLabel.text        = "Re-Partition"
+    $partLabel.AutoSize    = $true
+
+    $global:partStatus = New-Object system.Windows.Forms.Label
+    $partStatus.text        = "To Do"
+    $partStatus.AutoSize    = $true
+
+    $statusPanel.controls.add($partLabel, 0, $row)
+    $statusPanel.controls.add($partStatus, 1, $row)
+    $row++
+
+    $dlLabel             = New-Object system.Windows.Forms.Label
+    $dlLabel.text        = "Download"
+    $dlLabel.AutoSize    = $true
+
+    $global:dlStatus = New-Object system.Windows.Forms.Label
+    $dlStatus.text        = "To Do"
+    $dlStatus.AutoSize    = $true
+
+    $statusPanel.controls.add($dlLabel, 0, $row)
+    $statusPanel.controls.add($dlStatus, 1, $row)
+    $row++
+
+    $grubLabel             = New-Object system.Windows.Forms.Label
+    $grubLabel.text        = "Install Grub"
+    $grubLabel.AutoSize    = $true
+
+    $global:grubStatus = New-Object system.Windows.Forms.Label
+    $grubStatus.text        = "To Do"
+    $grubStatus.AutoSize    = $true
+
+    $statusPanel.controls.add($grubLabel, 0, $row)
+    $statusPanel.controls.add($grubStatus, 1, $row)
+    $row++
+
+    $rebootLabel             = New-Object system.Windows.Forms.Label
+    $rebootLabel.text        = "Reboot"
+    $rebootLabel.AutoSize    = $true
+
+    $global:rebootStatus = New-Object system.Windows.Forms.Label
+    $rebootStatus.text        = "To Do"
+    $rebootStatus.AutoSize    = $true
+
+    $statusPanel.controls.add($rebootLabel, 0, $row)
+    $statusPanel.controls.add($rebootStatus, 1, $row)
+    $row++
+
+    $progress.controls.add($statusPanel)
+
+    #TODO: button panel - Abort
+    $progress.controls.add( (New-Object system.Windows.Forms.Label) )
+
+    $form.controls.add($progress)
+
 
     # Actions
+
+    $form.add_shown({
+        $global:main.enabled = $false
+        try {
+            initFields
+        } finally {
+            $global:main.enabled = $true
+        }
+        $linuxSize.focus()
+    })
     
     $cleanButton.add_click({
-        $main.enabled = $false
+        $global:main.enabled = $false
         try {
             start-process cleanmgr -wait
             calcGui
         } finally {
-            $main.enabled = $true
+            $global:main.enabled = $true
         }
     })
 
     $defragButton.add_click({
-        $main.enabled = $false
+        $global:main.enabled = $false
         try {
             start-process dfrgui -wait
             calcGui
         } finally {
-            $main.enabled = $true
+            $global:main.enabled = $true
         }
     })
 
     $parterButton.add_click({
-        $main.enabled = $false
+        $global:main.enabled = $false
         try {
             start-process diskmgmt.msc -wait
             calcGui
         } finally {
-            $main.enabled = $true
+            $global:main.enabled = $true
         }
     })
 
@@ -738,34 +718,32 @@ function gui() {
 
     $installButton.add_click({
         if( (checkFields) ) {
-            $main.visible = $false
-            $progress.visible = $true
+            $global:main.visible = $false
+            $global:progress.visible = $true
             #TODO: Run as PSJob, remove doevents
             [System.Windows.Forms.Application]::DoEvents() 
 
-            init
-
-            $defragStatus.text = 'In Progress'
+            $global:defragStatus.text = 'In Progress'
             [System.Windows.Forms.Application]::DoEvents() 
             defrag
-            $defragStatus.text = 'Done'
+            $global:defragStatus.text = 'Done'
 
-            $partStatus.text = 'In Progress'
+            $global:partStatus.text = 'In Progress'
             [System.Windows.Forms.Application]::DoEvents() 
-            createLinuxSpace
-            $partStatus.text = 'Done'
+            repartition
+            $global:partStatus.text = 'Done'
 
-            $dlStatus.text = 'In Progress'
+            $global:dlStatus.text = 'In Progress'
             [System.Windows.Forms.Application]::DoEvents() 
             downloadIso
-            $dlStatus.text = 'Done'
+            $global:dlStatus.text = 'Done'
 
-            $grubStatus.text = 'In Progress'
+            $global:grubStatus.text = 'In Progress'
             [System.Windows.Forms.Application]::DoEvents() 
             installGrub
-            $grubStatus.text = 'Done'
+            $global:grubStatus.text = 'Done'
 
-            $rebootStatus.text = 'In Progress'
+            $global:rebootStatus.text = 'In Progress'
             [System.Windows.Forms.Application]::DoEvents() 
             Restart-Computer
         }
@@ -778,60 +756,29 @@ function gui() {
 $op = $args[0]
 
 switch($op) {
-    {$_ -eq "install-prep" } {
-        # The user is watching, so let's get slow stuff out of the way first.
-        checks
-        init
-        clean
-        disableSwap
-        defrag
-        downloadIso
-        toEfi   # Warn user to change fw.  boot to fwsetup
-        #rebootAndContinue "install"
-    }
-    {$_ -eq "get-info" } {
-        #outputs json for use in NSIS
-        #out: letter, disk-type, parts(offset, current, free, available)
-        getInfo | convertTo-json
-    }
     {$_ -eq "download-iso" } {
-        # Separated for testing purposes
         downloadIso
     }
-    {$_ -eq "install" } {
-        checks
-        checkSpace
-        init
-        #enableSwap
-        downloadIso  # in case install-prep wasn't run
-        #backupEfi "..."
-        installGrub
-        #backupEfi "..."
-        #setSizes -windows 30GB -system 20GB -user 90GB -iso 2GB
-        #installIsoVolume -delete-file
-        Restart-Computer # boot into linux
-    }
-    {$_ -eq "restore-efi" } {
-        #restoreEfi $args[1]
+    {$_ -eq "enable-swap" } {
+        enableSwap
+        Restart-Computer
     }
     {$_ -eq "disable-swap" } {
         disableSwap
         Restart-Computer
     }
-    {$_ -eq "uninstall" } {
-        # remove linux, remove grub, remove iso vol
-        #Restart-Computer
+    {$_ -eq "tz" } {
+#        getLinuxTimezone
+        installGrub
     }
-    {$_ -eq "gui2" } {
-        # TODO: remove.  for testing purposes.
-        $form = (gui)
-        echo '---'
-        $form.show()
-        sleep 6
-        $form.close()
+    {$_ -eq "defrag" } {
+        defrag
+    }
+    {$_ -eq "preseed" } {
+        set-content -value (expandTemplate "files\preseed.cfg") -path "preseed.tmp.cfg"
+        get-content -path 'preseed.tmp.cfg'
     }
     default {
-        checks
         $form = (gui)
         $form.showDialog()
     }

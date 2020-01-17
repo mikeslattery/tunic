@@ -26,11 +26,13 @@ This is subject to change over time.
 * Run as exe as administrator (ps2exe)
 
 ### MVP 2
-* Add Support: Other Mint variants, secure boot, MBR convertion
+
+* Add Support: Other Ubuntu variants, Full disk, MBR convertion
 * Port config: wifi passwords, locale, Chrome/Firefox settings
 * Limited efi backup/restore/revert functionality.  before.cfg, after.cfg
 
 ### 1.0
+
 * Add support: Windows 7/8, MBR, flexible partitioning, 32 bit Windows, Bitlocker, Full disk
 * Choice of several Debian/Ubuntu based distros
 * Port settings and apps
@@ -41,6 +43,7 @@ This is subject to change over time.
 * Desktop icons: efi recover, OS in VM, reboot, browse files
 * VirtualBox Linux host runs Windows partition w/sync protections.
 * Reboot and continue without user intervention of password during install
+* Keyboard layout preseed/import
 * Tunic welcome app
 
 ## Other Possible Use Cases and sub-components

@@ -112,8 +112,11 @@
 * https://github.com/xpeppers/provisioning-example
 * https://wiki.ubuntu.com/Enterprise/WorkstationAutoinstallPreseed
 * https://help.ubuntu.com/lts/installation-guide/amd64/apbs04.html#preseed-partman
-* 
 
+### Keyboard
+* https://github.com/linuxmint/ubiquity/blob/master/ubiquity/misc.py#L672
+* https://wiki.archlinux.org/index.php/Linux_console/Keyboard_configuration
+* https://github.com/alexriss/keyboard-layout-converter
 
 #### Kickstart
 

@@ -109,7 +109,7 @@ install-packageprovider -name NuGet -force
 $web = (New-Object System.Net.WebClient)
 iex $web.DownloadString('https://chocolatey.org/install.ps1')
 
-choco install -y 7zip
+choco install -y 7zip defraggler
 
 # Convert to EFI
 

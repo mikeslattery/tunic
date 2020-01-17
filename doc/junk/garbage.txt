@@ -557,3 +557,21 @@ d-i partman-auto/choose_recipe select atomic
 ps1 tempalte - https://gist.github.com/9to5IT/9620683
 template engine - $ExecutionContext.InvokeCommand.ExpandString((get-content "preseed.cfg.tpl"))
 
+clean
+disable-swap
+defrag
+mbr2gpt
+download-iso
+iso part
+mount-iso
+install-grub
+- grub files
+- grub.cfg
+- preseed.cfg
+- bcdedit
+umount-iso
+repartition
+enable-swap
+cleanup
+- delete iso
+- delete iso part
