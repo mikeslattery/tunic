@@ -24,7 +24,6 @@
 
 ### Install Linux
 
-* https://phoenixnap.dl.sourceforge.net/project/osboxes/v/vb/31-Lx-M-t/19.2/Cinnamon/19-2C-64bit.7z
 * https://www.groovypost.com/howto/dual-boot-windows-10-linux/
 * https://www.dell.com/support/article/us/en/04/sln151664/how-to-install-ubuntu-linux-on-your-dell-pc
 

@@ -1,3 +1,8 @@
+# Tunic Linux Installer for Windows
+# Copyright (c) Michael Slattery under GPLv3 with NO warranty.
+# For more info see  https://www.gnu.org/licenses/gpl-3.0.html#section15
+
+# Automated install of an ISO file
 # Windows build script
 
 # This is only for packaging a convenient, self-extracting .exe.
@@ -8,7 +13,7 @@
 Set-StrictMode -version 1.0
 $ErrorActionPreference = 'Stop'
 
-mkdir -force tmp
+#mkdir -force "$env:TEMP"
 $web = (New-Object System.Net.WebClient)
 
 if( ! (get-installedmodule -name ps2exe -errorAction silentlyContinue) ) {
@@ -23,9 +28,9 @@ if( ! ( Get-Command "7z" -ErrorAction SilentlyContinue ) ) {
     choco install -y 7zip
 }
 
-if( ! ( test-path "$PWD\tmp\7zSD.sfx" -errorAction SilentlyContinue) ) {
-    $web.downloadFile('https://www.7-zip.org/a/lzma1900.7z', "$PWD\tmp\lzma.7z")
-    7z e "$PWD\tmp\lzma.7z" -otmp bin\7zSD.sfx
+if( ! ( test-path "$env:TEMP\7zSD.sfx" -errorAction SilentlyContinue) ) {
+    $web.downloadFile('https://www.7-zip.org/a/lzma1900.7z', "$env:TEMP\lzma.7z")
+    7z e "$env:TEMP\lzma.7z" "-o$env:TEMP" bin\7zSD.sfx
 }
 
 #TODO: remove?
@@ -61,10 +66,10 @@ Test-Syntax 'tunic.ps1'
 
 # Clean
 
-Remove-Item tmp\lzma.7z -ErrorAction Ignore
+Remove-Item "$env:TEMP\lzma.7z" -ErrorAction Ignore
 Remove-Item tunic-script.exe -ErrorAction Ignore
 Remove-Item tunic.exe -ErrorAction Ignore
-Remove-Item tmp\tunic.7z -ErrorAction Ignore
+Remove-Item "$env:TEMP\tunic.7z" -ErrorAction Ignore
 
 # Convert tunic.ps1 to tunic-script.exe
 
@@ -75,9 +80,9 @@ invoke-ps2exe -inputfile tunic.ps1 -outputfile tunic-script.exe `
 
 # Package self-extracting .exe
 
-7z a tmp\tunic.7z tunic.ps1 tunic-script.exe files\*
+7z a "$env:TEMP\tunic.7z" tunic.ps1 tunic-script.exe files\*
 
-gc -Encoding Byte -Path "tmp\7zSD.sfx","files\7z.conf","tmp\tunic.7z" `
+gc -Encoding Byte -Path "$env:TEMP\7zSD.sfx","files\7z.conf","$env:TEMP\tunic.7z" `
     | sc -Encoding Byte tunic.exe
 
 copy tunic.exe ~\Desktop\tunic.exe
@@ -85,5 +90,5 @@ copy tunic.exe ~\Desktop\tunic.exe
 # Clean
 
 Remove-Item tunic-script.exe -ErrorAction Ignore
-Remove-Item tmp\tunic.7z -ErrorAction Ignore
+Remove-Item "$env:TEMP\tunic.7z" -ErrorAction Ignore
 

@@ -18,6 +18,7 @@ We do not suggest you use on real hardware; use inside a virtual machine or on a
 * At least 15 GB of free disk space on C:
 * Administrator user permissions
 * Internet access
+* AC Wall Power
 
 ### Limitations
 
@@ -63,7 +64,7 @@ See the docs directory for more information.
 
 Copyright (c) 2020 Michael Slattery.  See commit history for list of other authors.
 
-Distributed under the [GNU General Public License, version 3](https://www.gnu.org/licenses/gpl-3.0.en.html).
+Distributed under the [GNU General Public License, version 3](https://www.gnu.org/licenses/gpl-3.0.html).
 
 ### Disclaimer
 
@@ -71,5 +72,5 @@ This software could inadvertantly and permanently destroy all data, leave a comp
 or otherwise leave a computer in an undesirable state.
 This software comes as-is with absolutely no warranty.
 In no event shall shall the authors be held liable for damages arising out of use of this software.
-Read sections [15, 16, and 17](https://www.gnu.org/licenses/gpl-3.0.en.html#section15) of the GNU GPL version 3 license for more information.
+Read sections [15, 16, and 17](https://www.gnu.org/licenses/gpl-3.0.html#section15) of the GNU GPL version 3 license for more information.
 

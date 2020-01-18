@@ -1,8 +1,12 @@
+# Tunic Linux Installer for Windows
+# Copyright (c) Michael Slattery under GPLv3 with NO warranty.
+# For more info see  https://www.gnu.org/licenses/gpl-3.0.html#section15
+
 # Automated install of an ISO file
 
 if( $args[0] -eq 'noop') { exit } # for syntax checking
 
-$global:iso_url='http://mirrors.kernel.org/linuxmint/stable/19.2/linuxmint-19.2-cinnamon-64bit.iso'
+$global:iso_url='http://mirrors.kernel.org/linuxmint/stable/19.3/linuxmint-19.3-cinnamon-64bit.iso'
 $global:shim_url = 'https://github.com/pop-os/iso/blob/master/data/efi/shimx64.efi.signed?raw=true'
 
 $global:letter = $env:HOMEDRIVE[0]
@@ -57,6 +61,12 @@ function enableSwap() {
     powercfg.exe /h on
 }
 
+function clean() {
+    $regkey = 'registry::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches'
+    Get-childItem -path $regkey | new-itemproperty -name 'StateFlags0112' -propertytype DWORD -value 2 -force
+    start-process cleanmgr /sagerun:112 -wait
+}
+
 function defrag() {
     powercfg.exe /h off
     REG ADD "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Power" /V HiberbootEnabled /T REG_DWORD /D 0 /F
@@ -71,8 +81,8 @@ function die($msg) {
 }
 
 function yes($q) {
-    $buttons = [System.Windows.Forms.MessageBoxButtons]::OKCancel
-    return [System.Windows.Forms.MessageBox]::Show("Message Text","Title", $buttons )
+    $buttons = [System.Windows.Forms.MessageBoxButtons]::YesNo
+    return [System.Windows.Forms.MessageBox]::Show($q,"Tunic", $buttons ) -eq "Yes"
 }
 
 function openUrl($url) {
@@ -99,6 +109,10 @@ function checks() {
         die( 'Powershell 3 or above required' )
     }
 
+    if( (Get-WmiObject Win32_Battery).batteryStatus -eq 1 ) {
+        die( 'It is too risky to use Tunic while on battery.' )
+    }
+
     $partc = ( get-partition -driveLetter $global:letter )
     if( (get-disk -number $partc.diskNumber).partitionStyle -eq 'MBR' ) {
         if( yes('UEFI required.  Would you like to read how to convert form MBR to EFI') ) {
@@ -115,7 +129,7 @@ function checks() {
 
 function downloadIso() {
     if ( -not (Test-Path "$global:iso") ) {
-        $ciso = 'Z:\Downloads\linuxmint-19.2-cinnamon-64bit.iso'
+        $ciso = 'Z:\Downloads\linuxmint-19.3-cinnamon-64bit.iso'
         if ( Test-Path "$ciso" ) {
             copy "$ciso" "$global:iso"
         } else {
@@ -450,9 +464,16 @@ function gui() {
 
     $main.controls.add($sizePanel)
 
+    $cleanNotice             = New-Object system.Windows.Forms.Label
+    $cleanNotice.text        = 'These buttons may help free up more available space'
+    $cleanNotice.Dock         = [System.Windows.Forms.DockStyle]::Fill
+    $cleanNotice.autoSize    = $false
+    $main.controls.add($cleanNotice)
+
     $cleanPanel                     = New-Object system.Windows.Forms.FlowLayoutPanel
     $cleanPanel.padding      = 5
-    $cleanPanel.AutoSize     = $true
+    $cleanPanel.Dock         = [System.Windows.Forms.DockStyle]::Fill
+    $cleanPanel.AutoSize               = $false
 
     $cleanButton                     = New-Object system.Windows.Forms.Button
     $cleanButton.text                = "Clean"
@@ -468,6 +489,16 @@ function gui() {
     $parterButton.text              = "Partitions"
     $parterButton.tabStop           = $false
     $cleanPanel.controls.add($parterButton)
+
+    $swapButton                   = New-Object system.Windows.Forms.Button
+    $swapButton.text              = "Disable Swap"
+    $swapButton.tabStop           = $false
+    $cleanPanel.controls.add($swapButton)
+
+    $treeButton                   = New-Object system.Windows.Forms.Button
+    $treeButton.text              = "Disk Use"
+    $treeButton.tabStop           = $false
+    $cleanPanel.controls.add($treeButton)
 
     $main.controls.add($cleanPanel)
 
@@ -568,12 +599,12 @@ function gui() {
     $buttonPanel.AutoSize               = $true
 
     $abortButton                     = New-Object system.Windows.Forms.Button
-    $abortButton.text                = "Abort"
+    $abortButton.text                = "Exit"
     $abortButton.tabStop           = $false
     $buttonPanel.controls.add($abortButton)
 
     $global:installbutton = New-Object system.Windows.Forms.Button
-    $installbutton.text              = "Continue"
+    $installbutton.text              = "Install"
     $buttonPanel.controls.add($installButton)
 
     $main.controls.add($buttonPanel)
@@ -681,11 +712,11 @@ function gui() {
         }
         $linuxSize.focus()
     })
-    
+
     $cleanButton.add_click({
         $global:main.enabled = $false
         try {
-            start-process cleanmgr -wait
+            clean
             calcGui
         } finally {
             $global:main.enabled = $true
@@ -706,6 +737,37 @@ function gui() {
         $global:main.enabled = $false
         try {
             start-process diskmgmt.msc -wait
+            calcGui
+        } finally {
+            $global:main.enabled = $true
+        }
+    })
+
+    $swapButton.add_click({
+        $global:main.enabled = $false
+        try {
+            #TODO: change button caption disable/enable.
+            disableSwap
+            if( yes('Swap will be disabled on reboot.  Reboot now?') ) {
+                restart-computer -force
+            }
+        } finally {
+            $global:main.enabled = $true
+        }
+    })
+
+    $treeButton.add_click({
+        $global:main.enabled = $false
+        #TODO: make function
+        try {
+            $tree_dl='https://windirstat.mirror.wearetriple.com//wds_current_setup.exe'
+            $tree_setup= "$($global:tunic_dir)\windirstat-setup.exe"
+            $tree_exe= "C:\Program Files (x86)\WinDirStat\windirstat.exe"
+            if ( -not (Test-Path "$tree_exe") ) {
+                (New-Object System.Net.WebClient).DownloadFile($tree_dl, $tree_setup)
+                start-process $tree_setup /S -wait
+            }
+            start-process "$tree_exe" -wait
             calcGui
         } finally {
             $global:main.enabled = $true
@@ -745,7 +807,7 @@ function gui() {
 
             $global:rebootStatus.text = 'In Progress'
             [System.Windows.Forms.Application]::DoEvents() 
-            Restart-Computer
+            Restart-Computer -force
         }
     })
 
@@ -761,15 +823,16 @@ switch($op) {
     }
     {$_ -eq "enable-swap" } {
         enableSwap
-        Restart-Computer
     }
     {$_ -eq "disable-swap" } {
         disableSwap
-        Restart-Computer
+    }
+    {$_ -eq "install-grub" } {
+        downloadIso
+        installGrub
     }
     {$_ -eq "tz" } {
-#        getLinuxTimezone
-        installGrub
+        getLinuxTimezone
     }
     {$_ -eq "defrag" } {
         defrag

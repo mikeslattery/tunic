@@ -1,4 +1,8 @@
 #!/bin/bash
+# Tunic Linux Installer for Windows
+# Copyright (c) Michael Slattery under GPLv3 with NO warranty.
+# For more info see  https://www.gnu.org/licenses/gpl-3.0.html#section15
+
 usage() { cat >&2 <<USAGE
 Usage: $0 <subcommand> [<args>]
 
@@ -175,7 +179,7 @@ mirror() {
     docker run --name nginx \
         -d \
         -p 80:80 \
-        -v "$HOME/Downloads:/usr/share/nginx/html/linuxmint/stable/19.2" \
+        -v "$HOME/Downloads:/usr/share/nginx/html/linuxmint/stable/19.3" \
         nginx:alpine
 }
 

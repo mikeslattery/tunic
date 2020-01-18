@@ -1,3 +1,7 @@
+# Tunic Linux Installer for Windows
+# Copyright (c) Michael Slattery under GPLv3 with NO warranty.
+# For more info see  https://www.gnu.org/licenses/gpl-3.0.html#section15
+
 # Configure VM for testing purposes
 
 # Parts were copied from ./tunic.ps1
@@ -12,7 +16,7 @@ If (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdent
 }
 
 Write-host "Started."
-$iso_url='http://mirrors.kernel.org/linuxmint/stable/19.2/linuxmint-19.2-cinnamon-64bit.iso'
+$iso_url='http://mirrors.kernel.org/linuxmint/stable/19.3/linuxmint-19.3-cinnamon-64bit.iso'
 
 $letter = $env:HOMEDRIVE[0]
 $tunic_dir="${env:ALLUSERSPROFILE}\tunic"
@@ -109,7 +113,7 @@ install-packageprovider -name NuGet -force
 $web = (New-Object System.Net.WebClient)
 iex $web.DownloadString('https://chocolatey.org/install.ps1')
 
-choco install -y 7zip defraggler
+choco install -y 7zip defraggler nsis
 
 # Convert to EFI
 
