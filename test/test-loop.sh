@@ -77,7 +77,7 @@ build-vm() {
         vboxmanage unregistervm "$VMPARENT" --delete
         vboxmanage snapshot "$VMBASE" delete "$SNAPSHOT"
     fi
-    
+
     # Create $VMPARENT template clone
     vboxmanage snapshot "$VMBASE" take "$SNAPSHOT"
     vboxmanage clonevm  "$VMBASE"  --name "$VMPARENT" --snapshot "$SNAPSHOT" \

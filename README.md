@@ -6,8 +6,8 @@ The goal is a program that can install Linux on an existing Windows machine with
 
 ## Status
 
-This project is pre-alpha quality.
-We do not suggest you use on real hardware; use inside a virtual machine or on a computer you don't care about damaging.
+This project is a pre-release.
+There is a lot of work left to do in terms of quality and features.
 
 ### Requirements
 
@@ -23,8 +23,7 @@ We do not suggest you use on real hardware; use inside a virtual machine or on a
 ### Limitations
 
 * Currently, Tunic only installs [Linux Mint with Cinnamon, 64 bit](https://blog.linuxmint.com/?p=3832).
-* We are working on support for Windows 7 and 8, and other Debian/Ubuntu based Linux distros.
-* There are no short term plans for MBR or 32 bit support.
+* We are working on support for Windows 7 and 8, MBR, and other Debian/Ubuntu based Linux distros.
 * Error handling needs improvement.  A failed install could leave the system in an undesirable state.
 
 ### What Tunic Does
@@ -51,7 +50,7 @@ Read disclaimer for more information.
 
 1. Download and run the latest .exe file from releases.
 1. Answer questions.
-1. Let it run and walk away.  It can take up to an hour.
+1. Let it run.  It may take a long time.
 1. Enjoy your new Linux OS!
 
 ## More information

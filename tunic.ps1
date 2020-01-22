@@ -15,7 +15,7 @@ $global:tunic_dir="${env:ALLUSERSPROFILE}\tunic"
 $global:tunic_data="${tunic_dir}"
 $global:iso = "${tunic_data}\linux.iso"
 
-$global:MIN_DISK_FB = 15
+$global:MIN_DISK_GB = 15
 
 
 # Do very basic initialization
@@ -74,6 +74,10 @@ function defrag() {
     #TODO: powercfg.exe /h on - if was on before
 }
 
+function ternary($expr, $ontrue, $onfalse) {
+    if($expr) { return $ontrue } else { return $onfalse }
+}
+
 function die($msg) {
     write-host $msg
     [System.Windows.Forms.Messagebox]::Show($msg)
@@ -101,8 +105,8 @@ function checks() {
         die( 'Only 64 bit systems supported' )
     }
         
-    if( ! [System.Environment]::OSVersion.version.major -ge 10 ) {
-        die( 'Only Windows 10 supported' )
+    if( ! [System.Environment]::OSVersion.version.major -ge 7 ) {
+        die( 'Only Windows 7 or later supported' )
     }
 
     if( [System.Environment]::Version.major -lt 3 ) {
@@ -215,20 +219,27 @@ function installGrub() {
         mountvol $efi /s
     }
 
+    $secureBootEnabled = $false
+    try {
+        $secureBootEnabled = (confirm-secureBootUefi)
+    } catch {}
+
     if ( -not (Test-Path "$efi\boot\grub") ) {
         $usb = "$(( mount-diskimage -imagepath "$iso" | get-volume ).driveletter):"
         # Grub
         mkdir "${efi}\boot\grub" -force | out-null
         copy "${usb}\boot\grub\x86_64-efi" "${efi}\boot\grub\." -recurse
         copy "${usb}\EFI\BOOT\grubx64.efi" "${efi}\boot\grub\."
-        #TODO: use grubx64 if secureboot is not enabled
-        (New-Object System.Net.WebClient).DownloadFile($shim_url, "${efi}\boot\grub\shimx64.efi")
+        if( $secureBootEnabled ) {
+            (New-Object System.Net.WebClient).DownloadFile($shim_url, "${efi}\boot\grub\shimx64.efi")
+        }
         copy "files\grub.cfg" "${efi}\boot\grub\."
-        # Preseed
-        set-content -value (expandTemplate "files\preseed.cfg") -path "${global:tunic_dir}\preseed.cfg"
 
         dismount-diskimage -imagepath "$global:iso" | out-null
     }
+
+    # Preseed
+    set-content -value (expandTemplate "files\preseed.cfg") -path "${global:tunic_dir}\preseed.cfg"
 
     if ( -not (Test-Path "${global:tunic_dir}\bcd-before.bak" ) ) {
         bcdedit /export "${global:tunic_dir}\bcd-before.bak"
@@ -237,7 +248,12 @@ function installGrub() {
     #TODO: idempotent
     $osloader = (bcdedit /copy '{bootmgr}' /d ubuntu).replace('The entry was successfully copied to ','').replace('.','')
     bcdedit /set         "$osloader" device "partition=$efi"
-    bcdedit /set         "$osloader" path \boot\grub\shimx64.efi
+    if( $secureBootEnabled ) {
+        bcdedit /set         "$osloader" path \boot\grub\shimx64.efi
+    }
+    else {
+        bcdedit /set         "$osloader" path \boot\grub\grubx64.efi
+    }
     bcdedit /set         "$osloader" description "Linux ISO"
     bcdedit /deletevalue "$osloader" locale
     bcdedit /deletevalue "$osloader" inherit
@@ -262,7 +278,7 @@ function calcPartition() {
     # Calculate Gap
     $partnext = (get-partition -disknumber $global:partc.disknumber | where-object { $_.partitionNumber -eq ($global:partc.partitionNumber + 1)})
     if( ! $partnext ) {
-        #TODO: figure out hey -1MB needed
+        #TODO: figure out why -1MB needed
         $global:gap = $disk.size - ( $global:partc.offset + $global:partc.size ) - 1MB
     } else {
         $global:gap = $partnext.offset - ( $global:partc.offset + $global:partc.size )
@@ -271,9 +287,6 @@ function calcPartition() {
     # Calculate available
     $global:maxAvailable = $global:partc.size - (get-partitionsupportedsize -driveletter "$letter").sizeMin + $global:gap
 
-    #TODO: remove
-    write-host "$($partc.partitionNumber) partc.offset,size $($partc.offset / 1GB),$($partc.size / 1GB) next.offset $($partnext.offset / 1GB) disk.size $($disk.size / 1GB) gap $($global:gap / 1GB) avail $($global:maxAvailable / 1GB)"
-    write-host "$($partc.partitionNumber) partc.offset,size $($partc.offset),$($partc.size) next.offset $($partnext.offset) disk.size $($disk.size) gap $($global:gap) avail $($global:maxAvailable)"
 }
 
 function repartition() {
@@ -287,15 +300,15 @@ function repartition() {
 
     $newSize = $global:partc.size - ( $shrinkBy )
 
-    #TODO: remove
-    write-host "lsize $linuxSizeNum partc.size $( $global:partc.size ) shrinkBy $shrinkBy size $newSize"
-
     if( $shrinkBy -gt 0 ) {
         resize-partition -driveletter $letter -size $newSize
     }
 }
 
 function calcGui() {
+    $global:form.activate()
+    [System.Windows.Forms.Application]::DoEvents() 
+
     calcPartition
 
     $letter = $global:letter
@@ -306,7 +319,7 @@ function calcGui() {
     $used  = [math]::round( ( $volume.size - $volume.sizeRemaining ) / 1GB )
     $avail = [math]::floor( $global:maxAvailable / 1GB )
 
-    $global:sizeLabel.text  = "${letter}: Drive"
+    $global:sizeGroup.text  = "${letter}: Drive"
 
     $global:totalValue.text = "$total GB"
     $global:freeValue.text  = "$free GB"
@@ -318,9 +331,19 @@ function calcGui() {
     }
 }
 
+function treeMap() {
+    $tree_dl='https://windirstat.mirror.wearetriple.com//wds_current_setup.exe'
+    $tree_setup= "$($global:tunic_dir)\windirstat-setup.exe"
+    $tree_exe= "C:\Program Files (x86)\WinDirStat\windirstat.exe"
+    if ( -not (Test-Path "$tree_exe") ) {
+        (New-Object System.Net.WebClient).DownloadFile($tree_dl, $tree_setup)
+        start-process $tree_setup /S -wait
+    }
+    start-process "$tree_exe" -wait
+}
+
 function initFields() {
     checks
-    calcGui
 
     $userInfo = ( Get-WMIObject Win32_UserAccount | where caption -eq (whoami) )
     $fullname.text = $userInfo.fullName
@@ -329,46 +352,57 @@ function initFields() {
 }
 
 function checkFields() {
-    $global:main.enabled = $false
+    $global:outer.enabled = $false
 
     if( $password.text.length -eq 0 ) {
         [Void][System.Windows.Forms.Messagebox]::Show("Password required.")
-        $global:main.enabled = $true
+        $global:outer.enabled = $true
         [Void]$global:password.focus()
         return $false
     }
 
     if( $global:password.text -ne $global:password2.text ) {
         [Void][System.Windows.Forms.Messagebox]::Show("Passwords don't match")
-        $global:main.enabled = $true
+        $global:outer.enabled = $true
         [Void]$global:password.focus()
         return $false
     }
 
     if( ! $global:agreeBox.checked ) {
         [Void][System.Windows.Forms.Messagebox]::Show("You must agree to terms to continue.")
-        $global:main.enabled = $true
+        $global:outer.enabled = $true
         [Void]$global:agreeBox.focus()
         return $false
     }
 
-    $linuxSizeNum = [double]::parse( $global:linuxSize.text ) * 1GB
-    if( $linuxSizeNum -lt $global:MIN_DISK_GB * 1GB ) {
-        [Void][System.Windows.Forms.Messagebox]::Show("Linux requires at least ${MIN_DISK_GB}GB")
-        $global:main.enabled = $true
-        [Void]$global:linuxSize.focus()
-        return $false
+    if( $global:dualBootRadio.checked -and $global:dual.visible ) {
+        $linuxSizeNum = [double]::parse( $global:linuxSize.text ) * 1GB
+        if( $linuxSizeNum -lt $global:MIN_DISK_GB * 1GB ) {
+            [Void][System.Windows.Forms.Messagebox]::Show("Linux requires at least ${MIN_DISK_GB}GB")
+            $global:outer.enabled = $true
+            [Void]$global:linuxSize.focus()
+            return $false
+        }
+
+        if( $linuxSizeNum -gt $global:maxAvailable ) {
+            [Void][System.Windows.Forms.Messagebox]::Show("Not enough available space.")
+            $global:outer.enabled = $true
+            [Void]$global:linuxSize.focus()
+            return $false
+        }
     }
 
-    if( $linuxSizeNum -gt $global:maxAvailable ) {
-        [Void][System.Windows.Forms.Messagebox]::Show("Not enough available space.")
-        $global:main.enabled = $true
-        [Void]$global:linuxSize.focus()
-        return $false
-    }
-
-    $global:main.enabled = $true
+    $global:outer.enabled = $true
     return $true
+}
+
+function installTypeCheck() {
+    if( $global:dualBootRadio.checked ) {
+        $global:installButton.text = 'Continue'
+    }
+    else {
+        $installButton.text = 'Install Now'
+    }
 }
 
 function gui() {
@@ -376,9 +410,15 @@ function gui() {
     Add-Type -AssemblyName System.Windows.Forms
     [System.Windows.Forms.Application]::EnableVisualStyles()
 
-    $Form                   = New-Object system.Windows.Forms.Form
+    $global:Form            = New-Object system.Windows.Forms.Form
     $Form.text              = "Tunic Linux Mint Installer"
     $Form.autosize          = $true
+
+    # Outer layout
+    $global:outer = New-Object system.Windows.Forms.TableLayoutPanel
+    $outer.autosize          = $true
+    $outer.Dock              = [System.Windows.Forms.DockStyle]::Fill
+    $outer.columnCount       = 1
 
     # Main Input Panel
     $global:main = New-Object system.Windows.Forms.TableLayoutPanel
@@ -387,14 +427,41 @@ function gui() {
     $main.padding           = 10
     $main.columnCount       = 1
 
-    $global:sizeLabel = New-Object system.Windows.Forms.Label
-    $sizeLabel.text         = "C: Drive"
-    $sizeLabel.AutoSize     = $true
+    $bootGroup              = New-Object system.Windows.Forms.GroupBox
+    $bootGroup.text         = "Installation Type"
+    $bootGroup.Dock              = [System.Windows.Forms.DockStyle]::Fill
 
-    $main.controls.add($sizeLabel)
+    $bootPanel = New-Object system.Windows.Forms.TableLayoutPanel
+    $bootPanel.autosize          = $true
+    $bootPanel.Dock              = [System.Windows.Forms.DockStyle]::Fill
+    $bootPanel.columnCount       = 1
+
+    $global:dualBootRadio          = New-Object system.Windows.Forms.RadioButton
+    $dualBootRadio.text     = "Install Linux alongside Windows"
+    $dualBootRadio.Dock              = [System.Windows.Forms.DockStyle]::Fill
+    $dualBootRadio.checked  = $true
+    $bootPanel.controls.add($dualBootRadio)
+
+    $global:fullBootRadio          = New-Object system.Windows.Forms.RadioButton
+    $fullBootRadio.text     = "Erase entire disk and install Linux"
+    $fullBootRadio.Dock              = [System.Windows.Forms.DockStyle]::Fill
+    $bootPanel.controls.add($fullBootRadio)
+
+    $global:customBootRadio        = New-Object system.Windows.Forms.RadioButton
+    $customBootRadio.text   = "Custom/Advanced"
+    $customBootRadio.Dock              = [System.Windows.Forms.DockStyle]::Fill
+    $bootPanel.controls.add($customBootRadio)
+
+    $bootGroup.controls.add($bootPanel)
+
+    $main.controls.add($bootGroup)
+
+    $global:sizeGroup              = New-Object system.Windows.Forms.GroupBox
+    $sizeGroup.text         = "C: Drive"
+    $sizeGroup.autosize     = $true
+    $sizeGroup.Dock              = [System.Windows.Forms.DockStyle]::Fill
 
     $SizePanel              = New-Object system.Windows.Forms.TableLayoutPanel
-    $SizePanel.BackColor    = "#e3d7ed"
     $sizePanel.autosize     = $true
     $sizePanel.Dock         = [System.Windows.Forms.DockStyle]::Fill
     $sizePanel.padding      = 5
@@ -462,55 +529,13 @@ function gui() {
     $sizePanel.controls.add($linuxSize, 1, $row)
     $row++
 
-    $main.controls.add($sizePanel)
-
-    $cleanNotice             = New-Object system.Windows.Forms.Label
-    $cleanNotice.text        = 'These buttons may help free up more available space'
-    $cleanNotice.Dock         = [System.Windows.Forms.DockStyle]::Fill
-    $cleanNotice.autoSize    = $false
-    $main.controls.add($cleanNotice)
-
-    $cleanPanel                     = New-Object system.Windows.Forms.FlowLayoutPanel
-    $cleanPanel.padding      = 5
-    $cleanPanel.Dock         = [System.Windows.Forms.DockStyle]::Fill
-    $cleanPanel.AutoSize               = $false
-
-    $cleanButton                     = New-Object system.Windows.Forms.Button
-    $cleanButton.text                = "Clean"
-    $cleanButton.tabStop = $false
-    $cleanPanel.controls.add($cleanButton)
-
-    $defragButton                   = New-Object system.Windows.Forms.Button
-    $defragButton.text              = "Defrag"
-    $defragButton.tabStop           = $false
-    $cleanPanel.controls.add($defragButton)
-
-    $parterButton                   = New-Object system.Windows.Forms.Button
-    $parterButton.text              = "Partitions"
-    $parterButton.tabStop           = $false
-    $cleanPanel.controls.add($parterButton)
-
-    $swapButton                   = New-Object system.Windows.Forms.Button
-    $swapButton.text              = "Disable Swap"
-    $swapButton.tabStop           = $false
-    $cleanPanel.controls.add($swapButton)
-
-    $treeButton                   = New-Object system.Windows.Forms.Button
-    $treeButton.text              = "Disk Use"
-    $treeButton.tabStop           = $false
-    $cleanPanel.controls.add($treeButton)
-
-    $main.controls.add($cleanPanel)
-
-    $idGroupLabel                    = New-Object system.Windows.Forms.Label
-    $idGroupLabel.text               = "Identifcation"
-    $idGroupLabel.AutoSize           = $true
-
-    $main.controls.add($idGroupLabel)
+    $idGroup                    = New-Object system.Windows.Forms.GroupBox
+    $idGroup.text               = "Identifcation"
+    $idGroup.AutoSize           = $true
+    $idGroup.Dock              = [System.Windows.Forms.DockStyle]::Fill
 
     $idPanel                         = New-Object system.Windows.Forms.TableLayoutPanel
     $idPanel.autosize     = $true
-    $idPanel.BackColor               = "#e3d7ed"
     $idPanel.Dock         = [System.Windows.Forms.DockStyle]::Fill
     $idPanel.padding      = 5
     $idPanel.columnCount  = 2
@@ -581,7 +606,8 @@ function gui() {
     $idPanel.controls.add($hostname, 1, $row)
     $row++
 
-    $main.controls.add($idPanel)
+    $idGroup.controls.add($idPanel)
+    $main.controls.add($idGroup)
 
     $global:agreeBox = New-Object system.Windows.Forms.CheckBox
     $agreeBox.Dock         = [System.Windows.Forms.DockStyle]::Fill
@@ -594,22 +620,58 @@ function gui() {
 
     $main.controls.add($agreeBox)
 
-    $buttonPanel                     = New-Object system.Windows.Forms.FlowLayoutPanel
-    $buttonPanel.padding      = 5
-    $buttonPanel.AutoSize               = $true
+    $outer.controls.add($main)
 
-    $abortButton                     = New-Object system.Windows.Forms.Button
-    $abortButton.text                = "Exit"
-    $abortButton.tabStop           = $false
-    $buttonPanel.controls.add($abortButton)
+    # Dual boot Input Panel
+    $global:dual = New-Object system.Windows.Forms.TableLayoutPanel
+    $dual.autosize          = $true
+    $dual.Dock              = [System.Windows.Forms.DockStyle]::Fill
+    $dual.padding           = 10
+    $dual.columnCount       = 1
+    $dual.visible           = $false
 
-    $global:installbutton = New-Object system.Windows.Forms.Button
-    $installbutton.text              = "Install"
-    $buttonPanel.controls.add($installButton)
+    $sizeGroup.controls.add($sizePanel)
+    $dual.controls.add($sizeGroup)
 
-    $main.controls.add($buttonPanel)
+    $cleanNotice             = New-Object system.Windows.Forms.Label
+    $cleanNotice.text        = 'These buttons may help free up more available space'
+    $cleanNotice.Dock         = [System.Windows.Forms.DockStyle]::Fill
+    $cleanNotice.autoSize    = $false
+    $dual.controls.add($cleanNotice)
 
-    $form.controls.add($main)
+    $cleanPanel                     = New-Object system.Windows.Forms.FlowLayoutPanel
+    $cleanPanel.padding      = 5
+    $cleanPanel.Dock         = [System.Windows.Forms.DockStyle]::Fill
+    $cleanPanel.AutoSize               = $false
+
+    $cleanButton                     = New-Object system.Windows.Forms.Button
+    $cleanButton.text                = "Clean"
+    $cleanButton.tabStop = $false
+    $cleanPanel.controls.add($cleanButton)
+
+    $defragButton                   = New-Object system.Windows.Forms.Button
+    $defragButton.text              = "Defrag"
+    $defragButton.tabStop           = $false
+    $cleanPanel.controls.add($defragButton)
+
+    $parterButton                   = New-Object system.Windows.Forms.Button
+    $parterButton.text              = "Partitions"
+    $parterButton.tabStop           = $false
+    $cleanPanel.controls.add($parterButton)
+
+    $swapButton                   = New-Object system.Windows.Forms.Button
+    $swapButton.text              = "Disable Swap"
+    $swapButton.tabStop           = $false
+    $cleanPanel.controls.add($swapButton)
+
+    $treeButton                   = New-Object system.Windows.Forms.Button
+    $treeButton.text              = "Disk Use"
+    $treeButton.tabStop           = $false
+    $cleanPanel.controls.add($treeButton)
+
+    $dual.controls.add($cleanPanel)
+
+    $outer.controls.add($dual)
 
     # Progress Panel
 
@@ -626,7 +688,6 @@ function gui() {
     # Requirement Status Panel
 
     $StatusPanel              = New-Object system.Windows.Forms.TableLayoutPanel
-    $StatusPanel.BackColor    = "#e3d7ed"
     $StatusPanel.autosize     = $true
     $StatusPanel.Dock         = [System.Windows.Forms.DockStyle]::Fill
     $StatusPanel.padding      = 5
@@ -698,53 +759,73 @@ function gui() {
     #TODO: button panel - Abort
     $progress.controls.add( (New-Object system.Windows.Forms.Label) )
 
-    $form.controls.add($progress)
+    $outer.controls.add($progress)
 
+    # Button Panel - common to all input panels, but not progress
+
+    $buttonPanel                     = New-Object system.Windows.Forms.FlowLayoutPanel
+    $buttonPanel.padding      = 5
+    $buttonPanel.AutoSize               = $true
+
+    $abortButton                     = New-Object system.Windows.Forms.Button
+    $abortButton.text                = "Quit"
+    $abortButton.tabStop           = $false
+    $buttonPanel.controls.add($abortButton)
+
+    $global:installbutton = New-Object system.Windows.Forms.Button
+    $installbutton.text              = "Continue"
+    $buttonPanel.controls.add($installButton)
+
+    $outer.controls.add($buttonPanel)
+    
+    # The main form
+
+    $form.controls.add($outer)
 
     # Actions
 
     $form.add_shown({
-        $global:main.enabled = $false
+        $global:outer.enabled = $false
         try {
             initFields
         } finally {
-            $global:main.enabled = $true
+            $global:outer.enabled = $true
         }
-        $linuxSize.focus()
+        $dualBootRadio.focus()
     })
 
     $cleanButton.add_click({
-        $global:main.enabled = $false
+        $global:outer.enabled = $false
         try {
             clean
             calcGui
         } finally {
-            $global:main.enabled = $true
+            $global:outer.enabled = $true
         }
     })
 
     $defragButton.add_click({
-        $global:main.enabled = $false
+        $global:outer.enabled = $false
         try {
             start-process dfrgui -wait
             calcGui
         } finally {
-            $global:main.enabled = $true
+            $global:outer.enabled = $true
         }
     })
 
     $parterButton.add_click({
-        $global:main.enabled = $false
+        $global:outer.enabled = $false
         try {
             start-process diskmgmt.msc -wait
             calcGui
         } finally {
-            $global:main.enabled = $true
+            $global:outer.enabled = $true
         }
     })
 
     $swapButton.add_click({
-        $global:main.enabled = $false
+        $global:outer.enabled = $false
         try {
             #TODO: change button caption disable/enable.
             disableSwap
@@ -752,26 +833,30 @@ function gui() {
                 restart-computer -force
             }
         } finally {
-            $global:main.enabled = $true
+            $global:outer.enabled = $true
         }
     })
 
     $treeButton.add_click({
-        $global:main.enabled = $false
-        #TODO: make function
+        $global:outer.enabled = $false
         try {
-            $tree_dl='https://windirstat.mirror.wearetriple.com//wds_current_setup.exe'
-            $tree_setup= "$($global:tunic_dir)\windirstat-setup.exe"
-            $tree_exe= "C:\Program Files (x86)\WinDirStat\windirstat.exe"
-            if ( -not (Test-Path "$tree_exe") ) {
-                (New-Object System.Net.WebClient).DownloadFile($tree_dl, $tree_setup)
-                start-process $tree_setup /S -wait
-            }
-            start-process "$tree_exe" -wait
+            treeMap
             calcGui
         } finally {
-            $global:main.enabled = $true
+            $global:outer.enabled = $true
         }
+    })
+
+    $global:dualBootRadio.add_click({
+        installTypeCheck
+    })
+
+    $global:fullBootRadio.add_click({
+        installTypeCheck
+    })
+
+    $global:customBootRadio.add_click({
+        installTypeCheck
     })
 
     $abortButton.add_click( {
@@ -779,21 +864,43 @@ function gui() {
     })
 
     $installButton.add_click({
-        if( (checkFields) ) {
+        if( -not (checkFields) ) {
+            return
+        }
+        if( $main.visible -and $dualBootRadio.checked ) {
+            $main.visible = $false
+            $dual.visible = $true
+            $outer.enabled = $false
+            try {
+                $global:installButton.text = 'Install'
+                [System.Windows.Forms.Application]::DoEvents() 
+                calcGui
+            } finally {
+                $outer.enabled = $true
+            }
+            $linuxsize.focus()
+        }
+        else {
             $global:main.visible = $false
+            $global:dual.visible = $false
+            $installButton.visible = $false
             $global:progress.visible = $true
             #TODO: Run as PSJob, remove doevents
-            [System.Windows.Forms.Application]::DoEvents() 
 
-            $global:defragStatus.text = 'In Progress'
-            [System.Windows.Forms.Application]::DoEvents() 
-            defrag
-            $global:defragStatus.text = 'Done'
+            if( $dualBootRadio.checked ) {
+                $global:defragStatus.text = 'In Progress'
+                [System.Windows.Forms.Application]::DoEvents() 
+                defrag
+                $global:defragStatus.text = 'Done'
 
-            $global:partStatus.text = 'In Progress'
-            [System.Windows.Forms.Application]::DoEvents() 
-            repartition
-            $global:partStatus.text = 'Done'
+                $global:partStatus.text = 'In Progress'
+                [System.Windows.Forms.Application]::DoEvents() 
+                repartition
+                $global:partStatus.text = 'Done'
+            } else {
+                $global:defragStatus.text = 'Skipped'
+                $global:partStatus.text = 'Skipped'
+            }
 
             $global:dlStatus.text = 'In Progress'
             [System.Windows.Forms.Application]::DoEvents() 
@@ -842,7 +949,7 @@ switch($op) {
         get-content -path 'preseed.tmp.cfg'
     }
     default {
-        $form = (gui)
+        $global:form = (gui)
         $form.showDialog()
     }
 }
