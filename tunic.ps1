@@ -17,10 +17,28 @@ $global:iso = "${tunic_data}\linux.iso"
 
 $global:MIN_DISK_GB = 15
 
+$DUALBOOT = 1
+$FULLBOOT = 2
+$CUSTOMBOOT = 3
 
 # Do very basic initialization
-if ( -not (Test-Path "$global:tunic_dir") ) {
-    mkdir "$global:tunic_dir" | out-null
+
+function initData() {
+    if( $PSScriptRoot ) {
+        set-location -path $PSScriptRoot
+    }
+
+    if ( -not (Test-Path "$global:tunic_dir") ) {
+        mkdir "$global:tunic_dir" | out-null
+    }
+
+    $userInfo = ( Get-WMIObject Win32_UserAccount | where caption -eq (whoami) )
+    $global:data = @{
+        installType = $DUALBOOT;
+        fullname = $userInfo.fullName;
+        username = $userInfo.name.toLower();
+        hostname = $userInfo.psComputerName;
+    }
 }
 
 # Disable swap, hibernate, restore, error reports, dumps
@@ -104,7 +122,7 @@ function checks() {
     if( ! [System.Environment]::Is64BitOperatingSystem ) {
         die( 'Only 64 bit systems supported' )
     }
-        
+
     if( ! [System.Environment]::OSVersion.version.major -ge 7 ) {
         die( 'Only Windows 7 or later supported' )
     }
@@ -124,7 +142,7 @@ function checks() {
         }
         exit 1
     }
-        
+
     $blInfo = Get-Bitlockervolume
     if( $blInfo.ProtectionStatus -eq 'On' ) {
         die( 'Bitlocker encrypted drive not supported.' )
@@ -224,49 +242,61 @@ function installGrub() {
         $secureBootEnabled = (confirm-secureBootUefi)
     } catch {}
 
-    if ( -not (Test-Path "$efi\boot\grub") ) {
-        $usb = "$(( mount-diskimage -imagepath "$iso" | get-volume ).driveletter):"
-        # Grub
-        mkdir "${efi}\boot\grub" -force | out-null
-        copy "${usb}\boot\grub\x86_64-efi" "${efi}\boot\grub\." -recurse
-        copy "${usb}\EFI\BOOT\grubx64.efi" "${efi}\boot\grub\."
-        if( $secureBootEnabled ) {
-            (New-Object System.Net.WebClient).DownloadFile($shim_url, "${efi}\boot\grub\shimx64.efi")
+    $grub_dir="\boot\grub"
+    $grub_path="${efi}${grub_dir}"
+
+    if ( -not (Test-Path "$grub_path") ) {
+        $usb = $false
+        while( -not $usb ) {
+            try {
+                $usb = "$(( mount-diskimage -imagepath "$iso" | get-volume ).driveletter):"
+            } catch {
+                # If mount runs too early after boot an error may occur
+                sleep 10
+            }
         }
-        copy "files\grub.cfg" "${efi}\boot\grub\."
+
+        mkdir "$grub_path" -force | out-null
+        copy "${usb}\boot\grub\x86_64-efi" "$grub_path\." -recurse
+        copy "${usb}\EFI\BOOT\grubx64.efi" "$grub_path\."
+        if( $secureBootEnabled ) {
+            (New-Object System.Net.WebClient).DownloadFile($shim_url, "$grub_path\shimx64.efi")
+        }
+        copy "files\grub.cfg" "$grub_path\."
 
         dismount-diskimage -imagepath "$global:iso" | out-null
     }
 
-    # Preseed
-    set-content -value (expandTemplate "files\preseed.cfg") -path "${global:tunic_dir}\preseed.cfg"
-
+    # Boot Entry
     if ( -not (Test-Path "${global:tunic_dir}\bcd-before.bak" ) ) {
-        bcdedit /export "${global:tunic_dir}\bcd-before.bak"
+        bcdedit /export "${global:tunic_dir}\bcd-before.bak" | out-null
     }
 
     #TODO: idempotent
     $osloader = (bcdedit /copy '{bootmgr}' /d ubuntu).replace('The entry was successfully copied to ','').replace('.','')
-    bcdedit /set         "$osloader" device "partition=$efi"
+    bcdedit /set         "$osloader" device "partition=$efi" | out-null
     if( $secureBootEnabled ) {
-        bcdedit /set         "$osloader" path \boot\grub\shimx64.efi
+        bcdedit /set         "$osloader" path "$grub_dir\shimx64.efi" | out-null
     }
     else {
-        bcdedit /set         "$osloader" path \boot\grub\grubx64.efi
+        bcdedit /set         "$osloader" path "$grub_dir\grubx64.efi" | out-null
     }
-    bcdedit /set         "$osloader" description "Linux ISO"
-    bcdedit /deletevalue "$osloader" locale
-    bcdedit /deletevalue "$osloader" inherit
-    bcdedit /deletevalue "$osloader" default
-    bcdedit /deletevalue "$osloader" resumeobject
-    bcdedit /deletevalue "$osloader" displayorder
-    bcdedit /deletevalue "$osloader" toolsdisplayorder
-    bcdedit /deletevalue "$osloader" timeout
-    bcdedit /set '{fwbootmgr}' displayorder "$osloader" /addfirst
+    bcdedit /set         "$osloader" description "Linux ISO" | out-null
+    bcdedit /deletevalue "$osloader" locale | out-null
+    bcdedit /deletevalue "$osloader" inherit | out-null
+    bcdedit /deletevalue "$osloader" default | out-null
+    bcdedit /deletevalue "$osloader" resumeobject | out-null
+    bcdedit /deletevalue "$osloader" displayorder | out-null
+    bcdedit /deletevalue "$osloader" toolsdisplayorder | out-null
+    bcdedit /deletevalue "$osloader" timeout | out-null
+    bcdedit /set '{fwbootmgr}' displayorder "$osloader" /addfirst | out-null
+
+    # Preseed
+    set-content -value (expandTemplate "files\preseed.cfg") -path "${global:tunic_dir}\preseed.cfg"
 
     mountvol $efi /d
 
-    bcdedit /export "${global:tunic_dir}\bcd-grub.bak"
+    bcdedit /export "${global:tunic_dir}\bcd-grub.bak" | out-null
 }
 
 # Calculates globals gap and maxAvailable
@@ -294,7 +324,7 @@ function repartition() {
     $global:partc = (get-partition -driveletter $letter)
 
     # size entered in GUI
-    $linuxSizeNum = [double]::parse( $global:linuxSize.text ) * 1GB
+    $linusSizeNum = $data.linuxSize * 1GB
 
     $shrinkBy = $linuxSizeNum - $global:gap
 
@@ -306,8 +336,9 @@ function repartition() {
 }
 
 function calcGui() {
+write-host 'calcGui'
     $global:form.activate()
-    [System.Windows.Forms.Application]::DoEvents() 
+    [System.Windows.Forms.Application]::DoEvents()
 
     calcPartition
 
@@ -344,11 +375,11 @@ function treeMap() {
 
 function initFields() {
     checks
+    initData
 
-    $userInfo = ( Get-WMIObject Win32_UserAccount | where caption -eq (whoami) )
-    $fullname.text = $userInfo.fullName
-    $username.text = $userInfo.name.toLower()
-    $hostname.text = $userInfo.psComputerName
+    $fullname.text = $data.fullname
+    $username.text = $data.username
+    $hostname.text = $data.hostname
 }
 
 function checkFields() {
@@ -777,7 +808,7 @@ function gui() {
     $buttonPanel.controls.add($installButton)
 
     $outer.controls.add($buttonPanel)
-    
+
     # The main form
 
     $form.controls.add($outer)
@@ -791,6 +822,7 @@ function gui() {
         } finally {
             $global:outer.enabled = $true
         }
+        $global:form.activate()
         $dualBootRadio.focus()
     })
 
@@ -864,6 +896,18 @@ function gui() {
     })
 
     $installButton.add_click({
+        $data.username = $username.text
+        $data.fullname = $fullname.text
+        $data.hostname = $hostname.text
+        if( $dualBootRadio.checked ) {
+            $data.installType = $DUALBOOT
+        } elseif( $fullBootRadio.checked ) {
+            $data.installType = $FULLBOOT
+        } else {
+            $data.installType = $CUSTOMBOOT
+        }
+        $data.linuxSize = [double]::parse( $global:linuxSize.text )
+
         if( -not (checkFields) ) {
             return
         }
@@ -873,7 +917,7 @@ function gui() {
             $outer.enabled = $false
             try {
                 $global:installButton.text = 'Install'
-                [System.Windows.Forms.Application]::DoEvents() 
+                [System.Windows.Forms.Application]::DoEvents()
                 calcGui
             } finally {
                 $outer.enabled = $true
@@ -887,14 +931,14 @@ function gui() {
             $global:progress.visible = $true
             #TODO: Run as PSJob, remove doevents
 
-            if( $dualBootRadio.checked ) {
+            if( $data.installType -eq $DUALBOOT ) {
                 $global:defragStatus.text = 'In Progress'
-                [System.Windows.Forms.Application]::DoEvents() 
+                [System.Windows.Forms.Application]::DoEvents()
                 defrag
                 $global:defragStatus.text = 'Done'
 
                 $global:partStatus.text = 'In Progress'
-                [System.Windows.Forms.Application]::DoEvents() 
+                [System.Windows.Forms.Application]::DoEvents()
                 repartition
                 $global:partStatus.text = 'Done'
             } else {
@@ -903,24 +947,47 @@ function gui() {
             }
 
             $global:dlStatus.text = 'In Progress'
-            [System.Windows.Forms.Application]::DoEvents() 
+            [System.Windows.Forms.Application]::DoEvents()
             downloadIso
             $global:dlStatus.text = 'Done'
 
             $global:grubStatus.text = 'In Progress'
-            [System.Windows.Forms.Application]::DoEvents() 
+            [System.Windows.Forms.Application]::DoEvents()
             installGrub
             $global:grubStatus.text = 'Done'
 
             $global:rebootStatus.text = 'In Progress'
-            [System.Windows.Forms.Application]::DoEvents() 
-            Restart-Computer -force
+            [System.Windows.Forms.Application]::DoEvents()
+            #Restart-Computer -force
         }
     })
 
     return $form
 }
 
+# Installs full disk install.
+# Mainly for testing purposes.
+# User will have 'tunic' password.
+function fullDisk() {
+    initData
+    $data.installType = $FULLBOOT
+    $data.password = 'tunic'
+
+    if( $data.installType -eq $DUALBOOT ) {
+        write-host 'Defragmenting...'
+        defrag
+        write-host 'Repartitioning...'
+        calcPartition
+        repartition
+    }
+
+    write-host 'Downloading...'
+    downloadIso
+    write-host 'Installing Grub...'
+    installGrub
+    write-host 'Restarting...'
+    restart-computer -force
+}
 
 $op = $args[0]
 
@@ -940,6 +1007,9 @@ switch($op) {
     }
     {$_ -eq "tz" } {
         getLinuxTimezone
+    }
+    {$_ -eq "full-disk" } {
+        fullDisk
     }
     {$_ -eq "defrag" } {
         defrag

@@ -575,3 +575,10 @@ enable-swap
 cleanup
 - delete iso
 - delete iso part
+
+----
+windows.ps1
+controller.ps1
+api.ps1
+main.ps1
+

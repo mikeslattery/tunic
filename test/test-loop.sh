@@ -142,7 +142,7 @@ start-vm() {
     if ! _vmrunning; then
         vboxmanage startvm "$VM" --type gui
         while ! nc -z localhost "$SSHPORT"; do sleep 2; done
-        sleep 25
+        sleep 30
     fi
     echo 'Started VM.'
 }
@@ -167,6 +167,10 @@ power-up() {
     create-vm
     start-vm
     shell "$@"
+}
+
+full-disk() {
+    power-up 'z:src\tunic\tunic.ps1 full-disk'
 }
 
 use "power-down    Stop and delete VM"
