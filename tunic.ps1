@@ -2,18 +2,15 @@
 # Copyright (c) Michael Slattery under GPLv3 with NO warranty.
 # For more info see  https://www.gnu.org/licenses/gpl-3.0.html#section15
 
-# Automated install of an ISO file
+# Automated install of an iso_path
 
 if( $args[0] -eq 'noop') { exit } # for syntax checking
 
-$global:iso_url='http://mirrors.kernel.org/linuxmint/stable/19.3/linuxmint-19.3-cinnamon-64bit.iso'
 $global:shim_url = 'https://github.com/pop-os/iso/blob/master/data/efi/shimx64.efi.signed?raw=true'
 
 $global:letter = $env:HOMEDRIVE[0]
 $global:root_dir="${letter}:"
 $global:tunic_dir="${env:ALLUSERSPROFILE}\tunic"
-$global:tunic_data="${tunic_dir}"
-$global:iso = "${tunic_data}\linux.iso"
 
 $global:MIN_DISK_GB = 15
 
@@ -32,14 +29,27 @@ function initData() {
         mkdir "$global:tunic_dir" | out-null
     }
 
+    $distros = . files/distros.ps1
+
     $userInfo = ( Get-WMIObject Win32_UserAccount | where caption -eq (whoami) )
     $global:data = @{
         installType = $DUALBOOT;
         fullname = $userInfo.fullName;
         username = $userInfo.name.toLower();
         hostname = $userInfo.psComputerName;
+        iso_url  = $distros[0].url
     }
 }
+
+function getUrlFile($url) {
+    return $url -replace '^.*/', '' -replace '[?#].*$', ''
+}
+
+function getUrlPath($url) {
+    $file = getUrlFile($url)
+    return "${tunic_dir}\${file}"
+}
+
 
 # Disable swap, hibernate, restore, error reports, dumps
 function disableSwap() {
@@ -150,17 +160,19 @@ function checks() {
 }
 
 function downloadIso() {
-    if ( -not (Test-Path "$global:iso") ) {
-        $ciso = 'Z:\Downloads\linuxmint-19.3-cinnamon-64bit.iso'
+    $iso_path = getUrlPath($global:data.iso_url)
+    $iso_file = getUrlFile($global:data.iso_url)
+    if ( -not (Test-Path "$iso_path") ) {
+        $ciso = "Z:\Downloads\$iso_file"
         if ( Test-Path "$ciso" ) {
-            copy "$ciso" "$global:iso"
+            copy "$ciso" "$iso_path"
         } else {
             try {
-                (New-Object System.Net.WebClient).DownloadFile($global:iso_url, "$global:iso")
+                (New-Object System.Net.WebClient).DownloadFile($global:data.iso_url, "$iso_path")
                 #TODO: save to temp and move after.
                 #TODO: verify integrity
             } catch {
-                Remove-Item "$global:iso"
+                Remove-Item "$iso_path"
                 Throw "Download failed"
             }
         }
@@ -246,10 +258,13 @@ function installGrub() {
     $grub_path="${efi}${grub_dir}"
 
     if ( -not (Test-Path "$grub_path") ) {
+        $iso_file = getUrlFile($global:data.iso_url)
+        $iso_path = getUrlPath($global:data.iso_url)
+
         $usb = $false
         while( -not $usb ) {
             try {
-                $usb = "$(( mount-diskimage -imagepath "$iso" | get-volume ).driveletter):"
+                $usb = "$(( mount-diskimage -imagepath "$iso_path" | get-volume ).driveletter):"
             } catch {
                 # If mount runs too early after boot an error may occur
                 sleep 10
@@ -263,8 +278,9 @@ function installGrub() {
             (New-Object System.Net.WebClient).DownloadFile($shim_url, "$grub_path\shimx64.efi")
         }
         copy "files\grub.cfg" "$grub_path\."
+        set-content -path "$grub_path\grub.var.cfg" -value "set iso_file='$iso_file'"
 
-        dismount-diskimage -imagepath "$global:iso" | out-null
+        dismount-diskimage -imagepath "$iso_path" | out-null
     }
 
     # Boot Entry
@@ -324,7 +340,7 @@ function repartition() {
     $global:partc = (get-partition -driveletter $letter)
 
     # size entered in GUI
-    $linusSizeNum = $data.linuxSize * 1GB
+    $linusSizeNum = $global:data.linuxSize * 1GB
 
     $shrinkBy = $linuxSizeNum - $global:gap
 
@@ -336,7 +352,6 @@ function repartition() {
 }
 
 function calcGui() {
-write-host 'calcGui'
     $global:form.activate()
     [System.Windows.Forms.Application]::DoEvents()
 
@@ -377,9 +392,12 @@ function initFields() {
     checks
     initData
 
-    $fullname.text = $data.fullname
-    $username.text = $data.username
-    $hostname.text = $data.hostname
+    $fullname.text = $global:data.fullname
+    $username.text = $global:data.username
+    $hostname.text = $global:data.hostname
+
+    $distroName.items.addRange($distros % { $_.name })
+    $distroName.selectedIndex = 0
 }
 
 function checkFields() {
@@ -486,6 +504,27 @@ function gui() {
     $bootGroup.controls.add($bootPanel)
 
     $main.controls.add($bootGroup)
+
+    $distroPanel              = New-Object system.Windows.Forms.TableLayoutPanel
+    $distroPanel.autosize     = $true
+    $distroPanel.Dock         = [System.Windows.Forms.DockStyle]::Fill
+    $distroPanel.padding      = 5
+    $distroPanel.columnCount  = 2
+    $row = 0
+
+    $distroLabel             = New-Object system.Windows.Forms.Label
+    $distroLabel.text        = "Distro"
+    $distroLabel.AutoSize    = $true
+
+    $global:distroName = New-Object system.Windows.Forms.ComboBox
+    $distroName.width       = 180
+    $distroName.AutoSize    = $true
+
+    $distroPanel.controls.add($distroLabel, 0, $row)
+    $distroPanel.controls.add($distroName,  1, $row)
+    $row++
+
+    $main.controls.add($distroPanel)
 
     $global:sizeGroup              = New-Object system.Windows.Forms.GroupBox
     $sizeGroup.text         = "C: Drive"
@@ -896,17 +935,18 @@ function gui() {
     })
 
     $installButton.add_click({
-        $data.username = $username.text
-        $data.fullname = $fullname.text
-        $data.hostname = $hostname.text
+        $global:data.username = $username.text
+        $global:data.fullname = $fullname.text
+        $global:data.hostname = $hostname.text
+        $global:data.password = $password.text
         if( $dualBootRadio.checked ) {
-            $data.installType = $DUALBOOT
+            $global:data.installType = $DUALBOOT
         } elseif( $fullBootRadio.checked ) {
-            $data.installType = $FULLBOOT
+            $global:data.installType = $FULLBOOT
         } else {
-            $data.installType = $CUSTOMBOOT
+            $global:data.installType = $CUSTOMBOOT
         }
-        $data.linuxSize = [double]::parse( $global:linuxSize.text )
+        $global:data.iso_url = $distros[ $distroName.selectedIndex ].url
 
         if( -not (checkFields) ) {
             return
@@ -931,7 +971,9 @@ function gui() {
             $global:progress.visible = $true
             #TODO: Run as PSJob, remove doevents
 
-            if( $data.installType -eq $DUALBOOT ) {
+            if( $global:data.installType -eq $DUALBOOT ) {
+                $global:data.linuxSize = [double]::parse( $global:linuxSize.text )
+
                 $global:defragStatus.text = 'In Progress'
                 [System.Windows.Forms.Application]::DoEvents()
                 defrag
@@ -958,7 +1000,7 @@ function gui() {
 
             $global:rebootStatus.text = 'In Progress'
             [System.Windows.Forms.Application]::DoEvents()
-            #Restart-Computer -force
+            Restart-Computer -force
         }
     })
 
@@ -970,10 +1012,10 @@ function gui() {
 # User will have 'tunic' password.
 function fullDisk() {
     initData
-    $data.installType = $FULLBOOT
-    $data.password = 'tunic'
+    $global:data.installType = $FULLBOOT
+    $global:data.password = 'tunic'
 
-    if( $data.installType -eq $DUALBOOT ) {
+    if( $global:data.installType -eq $DUALBOOT ) {
         write-host 'Defragmenting...'
         defrag
         write-host 'Repartitioning...'
