@@ -4,6 +4,8 @@ Install Linux on Windows without a Live USB.
 
 The goal is a program that can install Linux on an existing Windows machine without need of a Live USB or making firmware/BIOS changes.
 
+![Alt text](https://i.imgur.com/VOhRiGh.png) ![Alt text](https://i.imgur.com/YNNt4HZ.png) ![Alt text](https://i.imgur.com/9P8auhO.png)
+
 ## Status
 
 This project is a pre-release.
