@@ -1,15 +1,15 @@
 @(
     @{
         name='Linux Mint - Cinnamon - 19.3';
-        url='http://mirrors.kernel.org/linuxmint/stable/19.3/linuxmint-19.3-cinnamon-64bit.iso';
+        url='http://mirrors.gigenet.com/linuxmint/iso/stable/19.3/linuxmint-19.3-cinnamon-64bit.iso';
     },
     @{
         name='Linux Mint - MATE - 19.3';
-        url='http://mirrors.kernel.org/linuxmint/stable/19.3/linuxmint-19.3-mata-64bit.iso';
+        url='http://mirrors.gigenet.com/linuxmint/iso/stable/19.3/linuxmint-19.3-mate-64bit.iso';
     },
     @{
         name='Linux Mint - Xfce - 19.3';
-        url='http://mirrors.kernel.org/linuxmint/stable/19.3/linuxmint-19.3-xfce-64bit.iso';
+        url='http://mirrors.gigenet.com/linuxmint/iso/stable/19.3/linuxmint-19.3-xfce-64bit.iso';
     },
     @{
         name='Ubuntu 18.04/LTS';

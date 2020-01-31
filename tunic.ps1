@@ -29,7 +29,7 @@ function initData() {
         mkdir "$global:tunic_dir" | out-null
     }
 
-    $distros = . files/distros.ps1
+    $global:distros = . files/distros.ps1
 
     $userInfo = ( Get-WMIObject Win32_UserAccount | where caption -eq (whoami) )
     $global:data = @{
@@ -37,7 +37,7 @@ function initData() {
         fullname = $userInfo.fullName;
         username = $userInfo.name.toLower();
         hostname = $userInfo.psComputerName;
-        iso_url  = $distros[0].url
+        iso_url  = $global:distros[0].url
     }
 }
 
@@ -172,6 +172,8 @@ function downloadIso() {
                 #TODO: save to temp and move after.
                 #TODO: verify integrity
             } catch {
+                write-host "Error downloading $( $global:data.iso_url ) to $iso_path"
+                write-host $_
                 Remove-Item "$iso_path"
                 Throw "Download failed"
             }
@@ -396,7 +398,7 @@ function initFields() {
     $username.text = $global:data.username
     $hostname.text = $global:data.hostname
 
-    $distroName.items.addRange($distros % { $_.name })
+    $distroName.items.addRange( ( $global:distros | % { $_.name } ) )
     $distroName.selectedIndex = 0
 }
 
@@ -946,7 +948,7 @@ function gui() {
         } else {
             $global:data.installType = $CUSTOMBOOT
         }
-        $global:data.iso_url = $distros[ $distroName.selectedIndex ].url
+        $global:data.iso_url = $global:distros[ $distroName.selectedIndex ].url
 
         if( -not (checkFields) ) {
             return
