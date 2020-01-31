@@ -16,7 +16,7 @@ If (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdent
 }
 
 Write-host "Started."
-$iso_url='http://mirrors.kernel.org/linuxmint/stable/19.3/linuxmint-19.3-cinnamon-64bit.iso'
+$iso_url='http://mirrors.gigenet.com/linuxmint/iso/stable/19.3/linuxmint-19.3-cinnamon-64bit.iso'
 
 $letter = $env:HOMEDRIVE[0]
 $tunic_dir="${env:ALLUSERSPROFILE}\tunic"
@@ -80,7 +80,7 @@ New-ItemProperty -Path "$loginPath" -Name DefaultPassword -Value "$password" -fo
 # DNS
 
 #TODO: $gateway = (Get-NetIPConfiguration).ipv4defaultgateway.nexthop
-#TODO: add-content 'C:\Windows\System32\drivers\etc\hosts' "$gateway mirrors.kernel.org"
+#TODO: add-content 'C:\Windows\System32\drivers\etc\hosts' "$gateway mirrors.gigenet.com"
 
 # Desktop Icons
 

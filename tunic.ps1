@@ -112,6 +112,11 @@ function die($msg) {
     exit 1
 }
 
+function say($msg) {
+    write-host $msg
+    [System.Windows.Forms.Messagebox]::Show($msg)
+}
+
 function yes($q) {
     $buttons = [System.Windows.Forms.MessageBoxButtons]::YesNo
     return [System.Windows.Forms.MessageBox]::Show($q,"Tunic", $buttons ) -eq "Yes"
@@ -155,7 +160,8 @@ function checks() {
 
     $blInfo = Get-Bitlockervolume
     if( $blInfo.ProtectionStatus -eq 'On' ) {
-        die( 'Bitlocker encrypted drive not supported.' )
+        $recoveryKey = (Get-BitLockerVolume -MountPoint 'C').KeyProtector
+        say( "Bitlocker may have issues with dual boot.  Write down your recovery key: $recoveryKey" )
     }
 }
 
@@ -164,18 +170,45 @@ function downloadIso() {
     $iso_file = getUrlFile($global:data.iso_url)
     if ( -not (Test-Path "$iso_path") ) {
         $ciso = "Z:\Downloads\$iso_file"
-        if ( Test-Path "$ciso" ) {
+        if ( Test-Path "ciso" ) {
             copy "$ciso" "$iso_path"
         } else {
+            Import-Module BitsTransfer
+            $url = $global:data.iso_url
+
+            $bits = ( Start-BitsTransfer -DisplayName $url -Source $url -Destination $iso_path -Asynchronous )
             try {
-                (New-Object System.Net.WebClient).DownloadFile($global:data.iso_url, "$iso_path")
+                #TODO: use a callback instead of direct updates.
+                $global:dlStatus.text = 'Connecting...'
+                While ($Bits.JobState -eq "Connecting") {
+                    sleep 1
+                    [System.Windows.Forms.Application]::DoEvents()
+                }
+                $global:dlStatus.text = 'Transferring...'
+                While ($Bits.JobState -eq "Transferring" -and $Bits.BytesTransferred -lt ( 1GB / 100 ) ) {
+                    sleep 1
+                    [System.Windows.Forms.Application]::DoEvents()
+                }
+                While ($Bits.JobState -eq "Transferring") {
+                    if ($Bits.JobState -eq "Error"){
+                        Resume-BitsTransfer -BitsJob $Bits
+                    }
+                    $state = $bits.jobState
+                    $pct = [int](($Bits.BytesTransferred*100) / $Bits.BytesTotal)
+                    $global:dlStatus.text = "$pct% complete"
+                    sleep 1
+                    [System.Windows.Forms.Application]::DoEvents()
+                }
                 #TODO: save to temp and move after.
                 #TODO: verify integrity
             } catch {
-                write-host "Error downloading $( $global:data.iso_url ) to $iso_path"
+                write-host "Error downloading $url to $iso_path"
                 write-host $_
                 Remove-Item "$iso_path"
                 Throw "Download failed"
+            }
+            finally {
+                $Bits | Complete-BitsTransfer
             }
         }
     }

@@ -7,13 +7,13 @@ The goal is a program that can install Linux on an existing Windows machine with
 ## Status
 
 This project is a pre-release.
-There is a lot of work left to do in terms of quality and features.
+There is a lot of work left to do in terms of features and quality.
 
 ### Requirements
 
 * Windows 10, 64 bit
-* Single unencrypted hard drive hosting the C: volume
-* UEFI
+* Single drive hosting the C: volume
+* UEFI  (supports secure boot)
 * At least 4 GB RAM
 * At least 15 GB of free disk space on C:
 * Administrator user permissions
@@ -22,9 +22,9 @@ There is a lot of work left to do in terms of quality and features.
 
 ### Limitations
 
-* Currently, Tunic only installs [Linux Mint with Cinnamon, 64 bit](https://blog.linuxmint.com/?p=3832).
-* We are working on support for Windows 7 and 8, MBR, and other Debian/Ubuntu based Linux distros.
-* Error handling needs improvement.  A failed install could leave the system in an undesirable state.
+* Currently, Tunic only installs [Linux Mint 64 bit](https://blog.linuxmint.com/?p=3832).
+* We are working on testing Windows 7 and 8, MBR, and support for other Debian/Ubuntu based Linux distros.
+* Error handling needs improvement.
 
 ### What Tunic Does
 
@@ -45,6 +45,8 @@ Backup your data!
 Before you start, make sure to backup up your entire disk(s).
 Tunic does not assist with full disk backup.
 Read disclaimer for more information.
+
+No, really.  Backup your data.
 
 ### Usage
 
