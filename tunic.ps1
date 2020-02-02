@@ -29,8 +29,24 @@ function initData() {
         mkdir "$global:tunic_dir" | out-null
     }
 
+    # Load distros from config file
     $global:distros = . files/distros.ps1
 
+    # Load distro information from Downloads directory
+    $mounts = ( dir "${HOME}\Downloads\*.iso" | mount-diskImage )
+    try {
+        if( $mounts ) {
+            $global:distros += ( $mounts | % { @{ name=($_ | get-volume).fileSystemLabel; url=$_.imagePath; } } )
+        }
+    }
+    catch {
+        write-host $_
+    }
+    finally {
+        $mounts | dismount-diskimage | out-null
+    }
+
+    # User account
     $userInfo = ( Get-WMIObject Win32_UserAccount | where caption -eq (whoami) )
     $global:data = @{
         installType = $DUALBOOT;
@@ -41,15 +57,27 @@ function initData() {
     }
 }
 
+# Get the name part of an URL
 function getUrlFile($url) {
     return $url -replace '^.*/', '' -replace '[?#].*$', ''
 }
 
-function getUrlPath($url) {
+# Get the path on the disk to the file
+function getUrlFilepath($url) {
     $file = getUrlFile($url)
-    return "${tunic_dir}\${file}"
+
+    $dir = "${env:HOME}\Downloads"
+    if ( -not (Test-Path "$dir") ) {
+        mkdir "$dir"
+    }
+
+    return "${dir}\${file}"
 }
 
+# Convert C: file path to grub path.
+function getGrubPath($filename) {
+    $filename -replace '^.*:', '' -replace '\\', '/'
+}
 
 # Disable swap, hibernate, restore, error reports, dumps
 function disableSwap() {
@@ -166,7 +194,30 @@ function checks() {
 }
 
 function downloadIso() {
-    $iso_path = getUrlPath($global:data.iso_url)
+    #TODO: remove.  guiDownloadIso w/callback
+    $iso_path = getUrlFilepath($global:data.iso_url)
+    $iso_file = getUrlFile($global:data.iso_url)
+    if ( -not (Test-Path "$iso_path") ) {
+        $ciso = "Z:\Downloads\$iso_file"
+        if ( Test-Path "$ciso" ) {
+            copy "$ciso" "$iso_path"
+        } else {
+            try {
+                (New-Object System.Net.WebClient).DownloadFile($global:data.iso_url, "$iso_path")
+            } catch {
+                write-host "Error downloading $( $global:data.iso_url ) to $iso_path"
+                write-host $_
+                Remove-Item "$iso_path"
+                Throw "Download failed"
+            }
+        }
+    }
+}
+
+function guiDownloadIso() {
+    #TODO: save to temp and move after.
+    #TODO: verify integrity
+    $iso_path = getUrlFilepath($global:data.iso_url)
     $iso_file = getUrlFile($global:data.iso_url)
     if ( -not (Test-Path "$iso_path") ) {
         $ciso = "Z:\Downloads\$iso_file"
@@ -293,8 +344,8 @@ function installGrub() {
     $grub_path="${efi}${grub_dir}"
 
     if ( -not (Test-Path "$grub_path") ) {
-        $iso_file = getUrlFile($global:data.iso_url)
-        $iso_path = getUrlPath($global:data.iso_url)
+        $iso_path = getUrlFilepath($global:data.iso_url)
+        $iso_grub_path = getGrubPath($iso_path)
 
         $usb = $false
         while( -not $usb ) {
@@ -307,13 +358,18 @@ function installGrub() {
         }
 
         mkdir "$grub_path" -force | out-null
-        copy "${usb}\boot\grub\x86_64-efi" "$grub_path\." -recurse
         copy "${usb}\EFI\BOOT\grubx64.efi" "$grub_path\."
+        if ( Test-Path "${usb}\boot\grub\x86_64-e" ) {
+            mkdir "$grub_path\x86_64-efi"
+            copy "${usb}\boot\grub\x86_64-e\*" "$grub_path\x86_64-efi\." -recurse
+        } else {
+            copy "${usb}\boot\grub\x86_64-efi" "$grub_path\." -recurse
+        }
         if( $secureBootEnabled ) {
             (New-Object System.Net.WebClient).DownloadFile($shim_url, "$grub_path\shimx64.efi")
         }
         copy "files\grub.cfg" "$grub_path\."
-        set-content -path "$grub_path\grub.var.cfg" -value "set iso_file='$iso_file'"
+        set-content -path "$grub_path\grub.var.cfg" -value "set iso_path='$iso_grub_path'"
 
         dismount-diskimage -imagepath "$iso_path" | out-null
     }
@@ -552,6 +608,7 @@ function gui() {
     $distroLabel.AutoSize    = $true
 
     $global:distroName = New-Object system.Windows.Forms.ComboBox
+    $distroName.DropDownStyle = [System.Windows.Forms.ComboBoxStyle]::DropDownList
     $distroName.width       = 180
     $distroName.AutoSize    = $true
 
@@ -1025,7 +1082,7 @@ function gui() {
 
             $global:dlStatus.text = 'In Progress'
             [System.Windows.Forms.Application]::DoEvents()
-            downloadIso
+            guiDownloadIso
             $global:dlStatus.text = 'Done'
 
             $global:grubStatus.text = 'In Progress'
@@ -1094,6 +1151,7 @@ switch($op) {
     {$_ -eq "preseed" } {
         set-content -value (expandTemplate "files\preseed.cfg") -path "preseed.tmp.cfg"
         get-content -path 'preseed.tmp.cfg'
+        rm 'preseed.tmp.cfg'
     }
     default {
         $global:form = (gui)
