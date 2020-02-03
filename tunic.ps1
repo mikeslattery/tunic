@@ -180,10 +180,21 @@ function checks() {
 
     $partc = ( get-partition -driveLetter $global:letter )
     if( (get-disk -number $partc.diskNumber).partitionStyle -eq 'MBR' ) {
-        if( yes('UEFI required.  Would you like to read how to convert form MBR to EFI') ) {
-            openUrl('https://www.windowscentral.com/how-convert-mbr-disk-gpt-move-bios-uefi-windows-10')
+        mbr2gpt /validate /allowfullos > $null 2> $null
+        if( $? ) {
+            if( yes('UEFI required.  Conversion requires BIOS change during boot.  Convert from MBR to UEFI now?') ) {
+                mbr2gpt /convert /allowfullos > $null 2> $null
+                if( $? ) {
+                    restart-computer -force
+                } else {
+                    die('Could not convert to UEFI.')
+                }
+            } else {
+                die('UEFI required.  Tunic can not run.')
+            }
+        } else {
+            die('UEFI required, but system cannot e converted.')
         }
-        exit 1
     }
 
     $blInfo = Get-Bitlockervolume
