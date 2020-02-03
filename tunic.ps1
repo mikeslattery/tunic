@@ -166,7 +166,9 @@ function checks() {
         die( 'Only 64 bit systems supported' )
     }
 
-    if( ! [System.Environment]::OSVersion.version.major -ge 7 ) {
+    $osversion = [System.Environment]::OSVersion.version
+    if( $osversion.major -lt 6 -or ($osversion.major -eq 6 -and $osversion.minor -eq 0 ) ) {
+        # Windows 7 = 6.1
         die( 'Only Windows 7 or later supported' )
     }
 
