@@ -1,19 +1,13 @@
 # Tunic
 
-Install Linux on Windows without a Live USB.
+Install Linux on an existing Windows system without a Live USB or firmware/BIOS configuration.
 
-The goal is a program that can install Linux on an existing Windows machine without need of a Live USB or making firmware/BIOS changes.
 
 ![Alt text](https://i.imgur.com/VOhRiGh.png) ![Alt text](https://i.imgur.com/YNNt4HZ.png) ![Alt text](https://i.imgur.com/9P8auhO.png)
 
-## Status
-
-This project is a pre-release.
-There is a lot of work left to do in terms of features and quality.
-
 ### Requirements
 
-* Windows 10, 64 bit
+* Windows 7, 64 bit
 * Single drive hosting the C: volume
 * UEFI  (supports secure boot)
 * At least 4 GB RAM
@@ -24,19 +18,25 @@ There is a lot of work left to do in terms of features and quality.
 
 ### Limitations
 
-* Currently, Tunic only installs [Linux Mint 64 bit](https://blog.linuxmint.com/?p=3832).
+* Currently, Tunic only installs official flavors of Ubuntu and Linux Mint.
 * We are working on testing Windows 7 and 8, MBR, and support for other Debian/Ubuntu based Linux distros.
 * Error handling needs improvement.
 
 ### What Tunic Does
 
-1. Asks all questions at beginning
-1. Offers full disk overwrite or dual boot arrangement.
-1. If dual boot, shrink C: volume to make space for Linux.  May require reboot.
-1. Download the Linux .iso file
-1. Install Grub with Secure Boot support
-1. Reboot and run the Ubiquity installer, automated
-1. Reboot into Linux!
+* Validates your system is compatible with Tunic.
+* Asks all questions at beginning  (so you don't have to babysit the install).
+* Offers to convert a MBR disk to UEFI.
+* Offers full disk overwrite or dual boot arrangement.
+* If dual boot, shrink C: volume to make space for Linux.
+* Provides tools to assist with freeing up space for Linux.
+* Provides Linux Mint, Ubuntu and most official Ubuntu flavors.
+* Downloads the Linux .iso file for you.
+* Installs Grub with Secure Boot support.
+* Calculates Linux equivalent values for your Windows locale and user account.
+* Reboots and runs the Ubiquity installer, automated.
+* If custom boot, will provide Ubuntu's Ubiquity partiton utility GUI.
+* Reboots into your final installed Linux!
 
 ## Getting Started
 
@@ -44,7 +44,7 @@ There is a lot of work left to do in terms of features and quality.
 
 Backup your data!
 
-Before you start, make sure to backup up your entire disk(s).
+Before you start, make sure to backup up an image of your entire disk(s).
 Tunic does not assist with full disk backup.
 Read disclaimer for more information.
 
@@ -52,14 +52,14 @@ No, really.  Backup your data.
 
 ### Usage
 
-1. Download and run the latest .exe file from releases.
+1. Download and run the [latest executable file](/mikeslattery/tunic/releases/download/latest/tunic.exe) from releases.
 1. Answer questions.
 1. Let it run.  It may take a long time.
 1. Enjoy your new Linux OS!
 
 ## More information
 
-See the docs directory for more information.
+See the [doc](doc) directory for more information.
 
 ## Legal Stuff
 
@@ -74,6 +74,5 @@ Distributed under the [GNU General Public License, version 3](https://www.gnu.or
 This software could inadvertantly and permanently destroy all data, leave a computer unbootable,
 or otherwise leave a computer in an undesirable state.
 This software comes as-is with absolutely no warranty.
-In no event shall shall the authors be held liable for damages arising out of use of this software.
 Read sections [15, 16, and 17](https://www.gnu.org/licenses/gpl-3.0.html#section15) of the GNU GPL version 3 license for more information.
 
