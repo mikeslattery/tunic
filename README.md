@@ -7,7 +7,7 @@ Install Linux on an existing Windows system without a Live USB or firmware/BIOS 
 
 ### Requirements
 
-* Windows 7, 64 bit
+* Windows 7, 8, 8.1, or 10, 64 bit
 * Single drive hosting the C: volume
 * UEFI  (supports secure boot)
 * At least 4 GB RAM
