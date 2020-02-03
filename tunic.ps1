@@ -66,7 +66,7 @@ function getUrlFile($url) {
 function getUrlFilepath($url) {
     $file = getUrlFile($url)
 
-    $dir = "${env:HOME}\Downloads"
+    $dir = "${HOME}\Downloads"
     if ( -not (Test-Path "$dir") ) {
         mkdir "$dir"
     }
@@ -221,7 +221,7 @@ function guiDownloadIso() {
     $iso_file = getUrlFile($global:data.iso_url)
     if ( -not (Test-Path "$iso_path") ) {
         $ciso = "Z:\Downloads\$iso_file"
-        if ( Test-Path "ciso" ) {
+        if ( Test-Path "$ciso" ) {
             copy "$ciso" "$iso_path"
         } else {
             Import-Module BitsTransfer
@@ -346,13 +346,13 @@ function installGrub() {
     if ( -not (Test-Path "$grub_path") ) {
         $iso_path = getUrlFilepath($global:data.iso_url)
         $iso_grub_path = getGrubPath($iso_path)
-
         $usb = $false
         while( -not $usb ) {
             try {
                 $usb = "$(( mount-diskimage -imagepath "$iso_path" | get-volume ).driveletter):"
             } catch {
                 # If mount runs too early after boot an error may occur
+                write-host $_
                 sleep 10
             }
         }
