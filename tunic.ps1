@@ -794,7 +794,7 @@ function gui() {
     $agreeBox.Dock         = [System.Windows.Forms.DockStyle]::Fill
     $agreeBox.text              =
         "I understand this software could cause data loss " +
-        "and is provided as-is without any warrantee.  " +
+        "and is provided as-is without any warranty.  " +
         "I shall not hold the authors liable for any damages whatsoever."
     $agreeBox.AutoSize               = $false
     $agreeBox.height = 50
