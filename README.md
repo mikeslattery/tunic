@@ -61,7 +61,7 @@ No, really.  Backup your data.
 
 ### Usage
 
-1. Download and run the [latest executable file](/mikeslattery/tunic/releases/download/latest/tunic.exe) from releases.
+1. Download and run the [latest executable file](https://github.com/mikeslattery/tunic/releases/latest/download/tunic.exe) from releases.
 1. Answer questions.
 1. Let it run.  It may take a long time.
 1. Enjoy your new Linux OS!
