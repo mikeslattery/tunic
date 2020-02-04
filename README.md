@@ -16,12 +16,6 @@ Install Linux on an existing Windows system without a Live USB or firmware/BIOS 
 * Internet access
 * AC Wall Power
 
-### Limitations
-
-* Currently, Tunic only installs official flavors of Ubuntu and Linux Mint.
-* We are working on testing Windows 7 and 8, MBR, and support for other Debian/Ubuntu based Linux distros.
-* Error handling needs improvement.
-
 ### What Tunic Does
 
 * Validates your system is compatible with Tunic.
@@ -35,14 +29,27 @@ Install Linux on an existing Windows system without a Live USB or firmware/BIOS 
 * Installs Grub with Secure Boot support.
 * Calculates Linux equivalent values for your Windows locale and user account.
 * Reboots and runs the Ubiquity installer, automated.
-* If custom boot, will provide Ubuntu's Ubiquity partiton utility GUI.
+* If custom install type choosen, will provide Ubuntu's Ubiquity partiton utility GUI.
 * Reboots into your final installed Linux!
+
+See the [TODO](doc/TODO.md) for ideas for future versions.
+
+### Limitations
+
+* Currently, Tunic only installs official flavors of Ubuntu and Linux Mint.
+* We are working on testing Windows 7 and 8, MBR, and support for other Debian/Ubuntu based Linux distros.
+* Error handling needs improvement.
+* During install the "Quit" button may not work.
+
+### More information
+
+See the [doc](doc) directory for more information.
 
 ## Getting Started
 
 ### Preparation
 
-Backup your data!
+* Backup your data!
 
 Before you start, make sure to backup up an image of your entire disk(s).
 Tunic does not assist with full disk backup.
@@ -50,16 +57,14 @@ Read disclaimer for more information.
 
 No, really.  Backup your data.
 
+* Close all other running applications.
+
 ### Usage
 
 1. Download and run the [latest executable file](/mikeslattery/tunic/releases/download/latest/tunic.exe) from releases.
 1. Answer questions.
 1. Let it run.  It may take a long time.
 1. Enjoy your new Linux OS!
-
-## More information
-
-See the [doc](doc) directory for more information.
 
 ## Legal Stuff
 

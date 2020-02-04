@@ -180,6 +180,10 @@ function checks() {
         die( 'It is too risky to use Tunic while on battery.' )
     }
 
+    if( (New-Object -ComObject 'Microsoft.Update.Installer').isBusy ) {
+        die('A Windows Update is in progress.  Try again later.')
+    }
+
     $partc = ( get-partition -driveLetter $global:letter )
     if( (get-disk -number $partc.diskNumber).partitionStyle -eq 'MBR' ) {
         mbr2gpt /validate /allowfullos > $null 2> $null
@@ -310,7 +314,9 @@ function getLinuxTimeZone() {
         }
 
         # Sloppy match
-        $ltz = $zones[0].type
+        if( ! $ltz ) {
+            $ltz = $zones[0].type
+        }
     }
     else {
         # Match by GMT and hour difference.
@@ -942,9 +948,10 @@ function gui() {
     $buttonPanel.padding      = 5
     $buttonPanel.AutoSize               = $true
 
-    $abortButton                     = New-Object system.Windows.Forms.Button
+    $global:abortButton              = New-Object system.Windows.Forms.Button
     $abortButton.text                = "Quit"
     $abortButton.tabStop           = $false
+    $abortButton.dialogResult        = [System.Windows.Forms.DialogResult]::Cancel
     $buttonPanel.controls.add($abortButton)
 
     $global:installbutton = New-Object system.Windows.Forms.Button
@@ -1035,10 +1042,6 @@ function gui() {
         installTypeCheck
     })
 
-    $abortButton.add_click( {
-        $form.close()
-    })
-
     $installButton.add_click({
         $global:data.username = $username.text
         $global:data.fullname = $fullname.text
@@ -1074,7 +1077,8 @@ function gui() {
             $global:dual.visible = $false
             $installButton.visible = $false
             $global:progress.visible = $true
-            #TODO: Run as PSJob, remove doevents
+            #TODO: Run as PSJob, remove doevents, don't hide abortButton
+            $global:abortButton.visible = $false
 
             if( $global:data.installType -eq $DUALBOOT ) {
                 $global:data.linuxSize = [double]::parse( $global:linuxSize.text )
@@ -1168,7 +1172,7 @@ switch($op) {
     }
     default {
         $global:form = (gui)
-        $form.showDialog()
+        [void]$form.showDialog()
     }
 }
 
