@@ -39,7 +39,6 @@ See the [TODO](doc/TODO.md) for ideas for future versions.
 * Currently, Tunic only installs official flavors of Ubuntu and Linux Mint.
 * We are working on testing Windows 7 and 8, MBR, and support for other Debian/Ubuntu based Linux distros.
 * Error handling needs improvement.
-* During install the "Quit" button may not work.
 
 ### More information
 
