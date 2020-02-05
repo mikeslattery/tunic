@@ -362,35 +362,28 @@ function installGrub() {
     $grub_dir="\boot\grub"
     $grub_path="${efi}${grub_dir}"
 
-    if ( -not (Test-Path "$grub_path") ) {
+    if ( -not (Test-Path "$grub_path\grub.var.cfg") ) {
         $iso_path = getUrlFilepath($global:data.iso_url)
         $iso_grub_path = getGrubPath($iso_path)
-        $usb = $false
-        while( -not $usb ) {
-            try {
-                $usb = "$(( mount-diskimage -imagepath "$iso_path" | get-volume ).driveletter):"
-            } catch {
-                # If mount runs too early after boot an error may occur
-                write-host $_
-                sleep 10
-            }
+
+        # Install 7z, if needed
+        $7z = '7z.exe'
+        if( (get-command "7z" -errorAction Ignore).count -eq 0 ) {
+            (New-Object System.Net.WebClient).DownloadFile('https://www.7-zip.org/a/7z1900.exe', "$env:TEMP\7zi.exe")
+            start-process "$env:TEMP\7zi.exe" /S -wait
+#            remove-item -path "$env:TEMP\7zi.exe"
+            $7z = 'C:\Program Files (x86)\7-Zip\7z.exe'
         }
 
+        # Extract grub files
         mkdir "$grub_path" -force | out-null
-        copy "${usb}\EFI\BOOT\grubx64.efi" "$grub_path\."
-        if ( Test-Path "${usb}\boot\grub\x86_64-e" ) {
-            mkdir "$grub_path\x86_64-efi"
-            copy "${usb}\boot\grub\x86_64-e\*" "$grub_path\x86_64-efi\." -recurse
-        } else {
-            copy "${usb}\boot\grub\x86_64-efi" "$grub_path\." -recurse
-        }
+        & "$7z" x "$iso_path" boot\grub "-o$efi\" -y -bb0 > $null
+        & "$7z" e "$iso_path" C:\Users\IEUser\Downloads\ubuntu-19.10-desktop-amd64.iso EFI\BOOT\grubx64.efi "-o${efi}\boot\grub" > $null
         if( $secureBootEnabled ) {
             (New-Object System.Net.WebClient).DownloadFile($shim_url, "$grub_path\shimx64.efi")
         }
         copy "files\grub.cfg" "$grub_path\."
         set-content -path "$grub_path\grub.var.cfg" -value "set iso_path='$iso_grub_path'"
-
-        dismount-diskimage -imagepath "$iso_path" | out-null
     }
 
     # Boot Entry
@@ -1123,6 +1116,10 @@ function fullDisk() {
     initData
     $global:data.installType = $FULLBOOT
     $global:data.password = 'tunic'
+    $url = 'http://releases.ubuntu.com/19.10/ubuntu-19.10-desktop-amd64.iso'
+    $url = 'http://releases.ubuntu.com/18.04.3/ubuntu-18.04.3-desktop-amd64.iso'
+    $url = 'http://mirrors.gigenet.com/linuxmint/iso/stable/19.3/linuxmint-19.3-xfce-64bit.iso'
+    $global:data.iso_url = $url
 
     if( $global:data.installType -eq $DUALBOOT ) {
         write-host 'Defragmenting...'
