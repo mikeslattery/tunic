@@ -98,10 +98,12 @@ This is subject to change over time.
 ### Development
 
 #### Short-term Challenges
-* Disable swap without reboot
+* Install grub from single source (ubuntu 18.04 + grub-for-windows)
+* Re-enable swap.  fix caption
 
 ### Medium term challenges
 * Auto-Resume from reboot
+* Disable swap without reboot
 
 #### Long Term Challenges
 * Install powershell if not available

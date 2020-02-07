@@ -7,6 +7,7 @@
 if( $args[0] -eq 'noop') { exit } # for syntax checking
 
 $global:shim_url = 'https://github.com/pop-os/iso/blob/master/data/efi/shimx64.efi.signed?raw=true'
+$global:grubx64_url = 'http://archive.ubuntu.com/ubuntu/pool/main/g/grub2-signed/grub-efi-amd64-signed_1.93.15+2.02-2ubuntu8.14_amd64.deb'
 
 $global:letter = $env:HOMEDRIVE[0]
 $global:root_dir="${letter}:"
@@ -368,39 +369,52 @@ function installGrub() {
 
         # Install 7z, if needed
         $7z = '7z.exe'
-        if( (get-command "7z" -errorAction Ignore).count -eq 0 ) {
+        if( (get-command "7z" -errorAction silentlyContinue).count -eq 0 ) {
             (New-Object System.Net.WebClient).DownloadFile('https://www.7-zip.org/a/7z1900.exe', "$env:TEMP\7zi.exe")
             start-process "$env:TEMP\7zi.exe" /S -wait
-#            remove-item -path "$env:TEMP\7zi.exe"
+            remove-item -path "$env:TEMP\7zi.exe" -errorAction silentlyContinue
             $7z = 'C:\Program Files (x86)\7-Zip\7z.exe'
         }
 
         # Extract grub files
         mkdir "$grub_path" -force | out-null
-        & "$7z" x "$iso_path" boot\grub "-o$efi\" -y -bb0 > $null
-        & "$7z" e "$iso_path" C:\Users\IEUser\Downloads\ubuntu-19.10-desktop-amd64.iso EFI\BOOT\grubx64.efi "-o${efi}\boot\grub" > $null
+        & "$7z" x -r "$iso_path" boot\grub "-o$efi\" -y -bb0 > $null
+        # grubx64.efi
+        (New-Object System.Net.WebClient).DownloadFile($global:grubx64_url, "$env:TEMP\signed.deb")
+        & "$7z" e -y "$env:TEMP\signed.deb" "-o${env:TEMP}" > $null
+        & "$7z" e -y "$env:TEMP\data.tar" .\usr\lib\grub\x86_64-efi-signed\gcdx64.efi.signed "-o${env:TEMP}" > $null
+        move "${env:TEMP}\gcdx64.efi.signed" "${efi}\EFI\BOOT\grubx64.efi" -force
+        rm "${env:TEMP}\signed.deb"
+        rm "${env:TEMP}\data.tar"
+        # shim64.efi
         if( $secureBootEnabled ) {
-            (New-Object System.Net.WebClient).DownloadFile($shim_url, "$grub_path\shimx64.efi")
+            (New-Object System.Net.WebClient).DownloadFile($shim_url, "${efi}\EFI\BOOT\shimx64.efi")
         }
+        # config
+        move "$grub_path\grub.cfg" "$grub_path\grub.orig.cfg" -errorAction silentlyContinue
         copy "files\grub.cfg" "$grub_path\."
         set-content -path "$grub_path\grub.var.cfg" -value "set iso_path='$iso_grub_path'"
     }
 
-    # Boot Entry
     if ( -not (Test-Path "${global:tunic_dir}\bcd-before.bak" ) ) {
         bcdedit /export "${global:tunic_dir}\bcd-before.bak" | out-null
     }
 
+    # Boot Entry
     #TODO: idempotent
+    if( test-path("${global:tunic_dir}\bcd.id") ) {
+        $osloader = (get-content "${global:tunic_dir}\bcd.id")
+        bcdedit /delete "$osloader" /f | out-null
+    }
     $osloader = (bcdedit /copy '{bootmgr}' /d ubuntu).replace('The entry was successfully copied to ','').replace('.','')
     bcdedit /set         "$osloader" device "partition=$efi" | out-null
     if( $secureBootEnabled ) {
-        bcdedit /set         "$osloader" path "$grub_dir\shimx64.efi" | out-null
+        bcdedit /set         "$osloader" path "\EFI\BOOT\shimx64.efi" | out-null
     }
     else {
-        bcdedit /set         "$osloader" path "$grub_dir\grubx64.efi" | out-null
+        bcdedit /set         "$osloader" path "\EFI\BOOT\grubx64.efi" | out-null
     }
-    bcdedit /set         "$osloader" description "Linux ISO" | out-null
+    bcdedit /set         "$osloader" description "Tunic Linux Installer" | out-null
     bcdedit /deletevalue "$osloader" locale | out-null
     bcdedit /deletevalue "$osloader" inherit | out-null
     bcdedit /deletevalue "$osloader" default | out-null
@@ -409,6 +423,7 @@ function installGrub() {
     bcdedit /deletevalue "$osloader" toolsdisplayorder | out-null
     bcdedit /deletevalue "$osloader" timeout | out-null
     bcdedit /set '{fwbootmgr}' displayorder "$osloader" /addfirst | out-null
+    set-content -path "${global:tunic_dir}\bcd.id" -value "$osloader"
 
     # Preseed
     set-content -value (expandTemplate "files\preseed.cfg") -path "${global:tunic_dir}\preseed.cfg"
@@ -563,7 +578,7 @@ function gui() {
     [System.Windows.Forms.Application]::EnableVisualStyles()
 
     $global:Form            = New-Object system.Windows.Forms.Form
-    $Form.text              = "Tunic Linux Mint Installer"
+    $Form.text              = "Tunic Linux Installer"
     $Form.autosize          = $true
 
     # Outer layout
@@ -1116,8 +1131,9 @@ function fullDisk() {
     initData
     $global:data.installType = $FULLBOOT
     $global:data.password = 'tunic'
-    $url = 'http://releases.ubuntu.com/19.10/ubuntu-19.10-desktop-amd64.iso'
+    # copied from distros.ps1
     $url = 'http://releases.ubuntu.com/18.04.3/ubuntu-18.04.3-desktop-amd64.iso'
+    $url = 'http://releases.ubuntu.com/19.10/ubuntu-19.10-desktop-amd64.iso'
     $url = 'http://mirrors.gigenet.com/linuxmint/iso/stable/19.3/linuxmint-19.3-xfce-64bit.iso'
     $global:data.iso_url = $url
 
