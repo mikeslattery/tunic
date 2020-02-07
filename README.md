@@ -1,7 +1,6 @@
 # Tunic
 
-Install Linux on an existing Windows system without a Live USB or firmware/BIOS configuration.
-
+Install Linux over or alongside an existing Windows install, straight from Windows, without requiring to boot from external media like a flash drive or making BIOS configuration changes.
 
 ![Alt text](https://i.imgur.com/VOhRiGh.png) ![Alt text](https://i.imgur.com/YNNt4HZ.png) ![Alt text](https://i.imgur.com/9P8auhO.png)
 
