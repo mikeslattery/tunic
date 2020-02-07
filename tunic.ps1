@@ -737,7 +737,6 @@ function gui() {
     $global:username = New-Object system.Windows.Forms.TextBox
     $username.multiline              = $false
     $username.AutoSize           = $true
-    $username.tabStop           = $false
 
     $idPanel.controls.add($usernameLabel, 0, $row)
     $idPanel.controls.add($username, 1, $row)
@@ -776,7 +775,6 @@ function gui() {
     $global:fullName = New-Object system.Windows.Forms.TextBox
     $fullName.multiline              = $false
     $fullName.AutoSize          = $true
-    $fullName.tabStop           = $false
 
     $idPanel.controls.add($fullNameLabel, 0, $row)
     $idPanel.controls.add($fullName, 1, $row)
@@ -789,7 +787,6 @@ function gui() {
     $global:hostname = New-Object system.Windows.Forms.TextBox
     $hostname.multiline              = $false
     $hostname.AutoSize          = $true
-    $hostname.tabStop           = $false
 
     $idPanel.controls.add($hostnameLabel, 0, $row)
     $idPanel.controls.add($hostname, 1, $row)
