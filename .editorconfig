@@ -8,7 +8,7 @@ insert_final_newline = true
 end_of_line = crlf
 indent_size = 4
 
-[*.{ps1,psm1,psd1}]
+[*.{ps1,psm1,psd1,nsi}]
 end_of_line = crlf
 indent_size = 4
 trim_trailing_whitespace = true
