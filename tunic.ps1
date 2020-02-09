@@ -138,7 +138,7 @@ function ternary($expr, $ontrue, $onfalse) {
 function die($msg) {
     write-host $msg
     [System.Windows.Forms.Messagebox]::Show($msg)
-    exit 1
+    $global:form.close()
 }
 
 function say($msg) {
@@ -168,9 +168,9 @@ function checks() {
     }
 
     $osversion = [System.Environment]::OSVersion.version
-    if( $osversion.major -lt 6 -or ($osversion.major -eq 6 -and $osversion.minor -eq 0 ) ) {
-        # Windows 7 = 6.1
-        die( 'Only Windows 7 or later supported' )
+    if( $osversion.major -lt 10 ) {
+        # Windows 7=6.1, 8=6.2, 8.1=6.3  Windows 10=10
+        die( 'Only Windows 10 supported' )
     }
 
     if( [System.Environment]::Version.major -lt 3 ) {
@@ -1122,6 +1122,25 @@ function gui() {
     return $form
 }
 
+function hideConsole() {
+
+    # .Net methods for hiding/showing the console in the background
+    Add-Type -Name Window -Namespace Console -MemberDefinition '
+        [DllImport("Kernel32.dll")]
+        public static extern IntPtr GetConsoleWindow();
+
+        [DllImport("user32.dll")]
+        public static extern bool ShowWindow(IntPtr hWnd, Int32 nCmdShow);
+    '
+
+    $consoleWin = [Console.Window]::GetConsoleWindow()
+
+    write-host "c = $consoleWin"
+
+    # https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-showwindow
+    [Console.Window]::ShowWindow($consoleWin, 6)
+}
+
 # Installs full disk install.
 # Mainly for testing purposes.
 # User will have 'tunic' password.
@@ -1180,6 +1199,11 @@ switch($op) {
         set-content -value (expandTemplate "files\preseed.cfg") -path "preseed.tmp.cfg"
         get-content -path 'preseed.tmp.cfg'
         rm 'preseed.tmp.cfg'
+    }
+    {$_ -eq "hidden" } {
+        hideConsole
+        $global:form = (gui)
+        [void]$form.showDialog()
     }
     default {
         $global:form = (gui)
