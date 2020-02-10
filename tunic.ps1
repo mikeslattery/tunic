@@ -581,6 +581,8 @@ function gui() {
     $global:Form            = New-Object system.Windows.Forms.Form
     $Form.text              = "Tunic Linux Installer"
     $Form.autosize          = $true
+    $pwd = (get-location).path
+    $form.icon              = new-object System.Drawing.Icon("$pwd/file/tunic-logo.ico")
 
     # Outer layout
     $global:outer = New-Object system.Windows.Forms.TableLayoutPanel

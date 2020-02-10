@@ -3,6 +3,7 @@ OutFile "tunic.exe"
 ShowInstDetails hide
 SilentInstall silent
 Unicode true
+Icon "files\tunic-logo.ico"
 
 Section "Tunic Linux Installer"
     SetOutPath "$TEMP\Tunic"
