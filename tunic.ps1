@@ -968,6 +968,7 @@ function gui() {
 
     $global:installbutton = New-Object system.Windows.Forms.Button
     $installbutton.text              = "Continue"
+    $installButton.enabled           = $false
     $buttonPanel.controls.add($installButton)
 
     $outer.controls.add($buttonPanel)
@@ -987,6 +988,12 @@ function gui() {
         }
         $global:form.activate()
         $dualBootRadio.focus()
+    })
+
+    $agreeBox.add_click({
+        if( $agreeBox.checked ) {
+            $installButton.enabled = $true
+        }
     })
 
     $cleanButton.add_click({
