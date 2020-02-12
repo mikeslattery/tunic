@@ -167,6 +167,10 @@ function checks() {
         die( 'Only 64 bit systems supported' )
     }
 
+    if( [intPtr]::size -eq 4 ) {
+        die( 'Tunic cannot be run from 32 bit Powershell' )
+    }
+
     $osversion = [System.Environment]::OSVersion.version
     if( $osversion.major -lt 10 ) {
         # Windows 7=6.1, 8=6.2, 8.1=6.3  Windows 10=10
@@ -582,7 +586,7 @@ function gui() {
     $Form.text              = "Tunic Linux Installer"
     $Form.autosize          = $true
     $pwd = (get-location).path
-    $form.icon              = new-object System.Drawing.Icon("$pwd/file/tunic-logo.ico")
+    $form.icon              = new-object System.Drawing.Icon("$PSScriptRoot\files\tunic-logo.ico")
 
     # Outer layout
     $global:outer = New-Object system.Windows.Forms.TableLayoutPanel
