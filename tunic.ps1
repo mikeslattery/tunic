@@ -222,6 +222,7 @@ function downloadIso() {
     if ( -not (Test-Path "$iso_path") ) {
         $ciso = "Z:\Downloads\$iso_file"
         if ( Test-Path "$ciso" ) {
+            echo 'Cached.'
             copy "$ciso" "$iso_path"
         } else {
             try {
@@ -1154,6 +1155,26 @@ function hideConsole() {
     [Console.Window]::ShowWindow($consoleWin, 6)
 }
 
+function uninstall() {
+    if( !([Security.Principal.WindowsPrincipal] `
+          [Security.Principal.WindowsIdentity]::GetCurrent() `
+        ).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator) ) {
+        echo  'Must be an Administrator'
+        exit 1
+    }
+    if( test-path("${global:tunic_dir}\bcd.id") ) {
+        $osloader = (get-content "${global:tunic_dir}\bcd.id")
+        bcdedit /delete "$osloader" /cleanup /f
+    }
+    $efi = "S:"
+    if ( -not (Test-Path "$efi") ) {
+        mountvol $efi /s
+    }
+    rm "${efi}\boot" -recurse -force
+    mountvol "$efi" /d
+    rm "${global:tunic_dir}" -recurse -force
+}
+
 # Installs full disk install.
 # Mainly for testing purposes.
 # User will have 'tunic' password.
@@ -1163,8 +1184,9 @@ function fullDisk() {
     $global:data.password = 'tunic'
     # copied from distros.ps1
     $url = 'http://releases.ubuntu.com/18.04.3/ubuntu-18.04.3-desktop-amd64.iso'
-    $url = 'http://mirrors.gigenet.com/linuxmint/iso/stable/19.3/linuxmint-19.3-xfce-64bit.iso'
     $url = 'http://releases.ubuntu.com/19.10/ubuntu-19.10-desktop-amd64.iso'
+    $url = 'http://mirrors.gigenet.com/linuxmint/iso/stable/19.3/linuxmint-19.3-xfce-64bit.iso'
+    $url = 'http://mirrors.gigenet.com/linuxmint/iso/stable/19.3/linuxmint-19.3-cinnamon-64bit.iso'
     $global:data.iso_url = $url
 
     if( $global:data.installType -eq $DUALBOOT ) {
@@ -1217,6 +1239,9 @@ switch($op) {
         hideConsole
         $global:form = (gui)
         [void]$form.showDialog()
+    }
+    {$_ -eq "uninstall" } {
+        uninstall
     }
     default {
         $global:form = (gui)
