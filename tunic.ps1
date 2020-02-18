@@ -222,7 +222,7 @@ function downloadIso() {
     if ( -not (Test-Path "$iso_path") ) {
         $ciso = "Z:\Downloads\$iso_file"
         if ( Test-Path "$ciso" ) {
-            echo 'Cached.'
+            write-host 'Cached.'
             copy "$ciso" "$iso_path"
         } else {
             try {
@@ -1149,17 +1149,15 @@ function hideConsole() {
 
     $consoleWin = [Console.Window]::GetConsoleWindow()
 
-    write-host "c = $consoleWin"
-
     # https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-showwindow
-    [Console.Window]::ShowWindow($consoleWin, 6)
+    [void][Console.Window]::ShowWindow($consoleWin, 6)
 }
 
 function uninstall() {
     if( !([Security.Principal.WindowsPrincipal] `
           [Security.Principal.WindowsIdentity]::GetCurrent() `
         ).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator) ) {
-        echo  'Must be an Administrator'
+        write-host  'Must be an Administrator'
         exit 1
     }
     if( test-path("${global:tunic_dir}\bcd.id") ) {
