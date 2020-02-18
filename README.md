@@ -29,9 +29,8 @@ See the [TODO](doc/TODO.md) for ideas for future versions.
 
 * Windows 10, 64 bit
 * Single drive hosting the C: volume
-* UEFI  (supports secure boot)
 * At least 4 GB RAM
-* At least 15 GB of free disk space on C:
+* At least 15 GB of free disk space
 * Administrator user permissions
 * Internet access
 * AC Wall Power
@@ -69,6 +68,8 @@ from releases.
 1. Answer questions.
 1. Let it run.  It may take a long time.
 1. Enjoy your new Linux OS!
+
+See the [FAQ](doc/faq.md) if you need further help.
 
 ## Legal Stuff
 
