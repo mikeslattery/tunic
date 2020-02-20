@@ -15,12 +15,13 @@ without requiring to boot from external media like a flash drive or making BIOS 
 * Offers full disk overwrite or dual boot arrangement.
 * If dual boot, shrink C: volume to make space for Linux.
 * Provides tools to assist with freeing up space for Linux.
+* Disables Windows fast boot.
 * Provides Linux Mint, Ubuntu and most official Ubuntu flavors.
 * Downloads the Linux .iso file for you.
 * Installs Grub with Secure Boot support.
 * Calculates Linux equivalent values for your Windows locale and user account.
-* Reboots and runs the Ubiquity installer, automated.
-* If custom install type choosen, will provide Ubuntu's Ubiquity partiton utility GUI.
+* Reboots and runs the Ubiquity installer, automated, (fully in RAM with mounts to the iso removed).
+* If custom install type choosen, will provide Ubuntu's Ubiquity disk partiton GUI.
 * Reboots into your final installed Linux!
 
 See the [TODO](doc/TODO.md) for ideas for future versions.
