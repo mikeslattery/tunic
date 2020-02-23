@@ -6,6 +6,8 @@
 
 if( $args[0] -eq 'noop') { exit } # for syntax checking
 
+$ProgressPreference = 'SilentlyContinue'
+
 $global:shim_url = 'https://github.com/pop-os/iso/blob/master/data/efi/shimx64.efi.signed?raw=true'
 $global:grubx64_url = 'http://archive.ubuntu.com/ubuntu/pool/main/g/grub2-signed/grub-efi-amd64-signed_1.93.15+2.02-2ubuntu8.14_amd64.deb'
 
@@ -18,6 +20,8 @@ $global:MIN_DISK_GB = 15
 $DUALBOOT = 1
 $FULLBOOT = 2
 $CUSTOMBOOT = 3
+
+$web = (New-Object System.Net.WebClient)
 
 # Do very basic initialization
 
@@ -226,7 +230,7 @@ function downloadIso() {
             copy "$ciso" "$iso_path"
         } else {
             try {
-                (New-Object System.Net.WebClient).DownloadFile($global:data.iso_url, "$iso_path")
+                $web.DownloadFile($global:data.iso_url, "$iso_path")
             } catch {
                 write-host "Error downloading $( $global:data.iso_url ) to $iso_path"
                 write-host $_
@@ -295,7 +299,6 @@ function getLinuxTimeZone() {
     $url = 'https://raw.githubusercontent.com/unicode-org/cldr/master/common/supplemental/windowsZones.xml'
     $file = "$env:TEMP\windowsZones.xml"
     if( ! (Test-Path $file -ErrorAction SilentlyContinue) ) {
-        $web = (New-Object System.Net.WebClient)
         $web.DownloadFile($url, $file)
     }
     [xml]$xml = Get-Content $file
@@ -353,16 +356,6 @@ function expandTemplate($filename) {
 }
 
 function installGrub() {
-    # Install 7z, if needed
-
-    $7z = '7z.exe'
-    if( (get-command "7z" -errorAction silentlyContinue).count -eq 0 ) {
-        (New-Object System.Net.WebClient).DownloadFile('https://www.7-zip.org/a/7z1900.exe', "$env:TEMP\7zi.exe")
-        start-process "$env:TEMP\7zi.exe" /S -wait
-        remove-item -path "$env:TEMP\7zi.exe" -errorAction silentlyContinue
-        $7z = 'C:\Program Files (x86)\7-Zip\7z.exe'
-    }
-
     # TODO: allocate drive letter.  try..finally
     #$efi = (ls function:[d-z]: -n | ?{ !(test-path $_) } | random)
     $efi = "S:"
@@ -381,22 +374,21 @@ function installGrub() {
     $iso_path = getUrlFilepath($global:data.iso_url)
     $iso_grub_path = getGrubPath($iso_path)
 
-    # Extract grub files
-
-    mkdir "${efi}\EFI\BOOT" -force | out-null
-    mkdir "$grub_path" -force | out-null
-    & "$7z" x -r "$iso_path" boot\grub "-o$efi\" -y -bb0 > $null
-    # grubx64.efi
-    (New-Object System.Net.WebClient).DownloadFile($global:grubx64_url, "$env:TEMP\signed.deb")
-    & "$7z" e -y "$env:TEMP\signed.deb" "-o${env:TEMP}" > $null
-    & "$7z" e -y "$env:TEMP\data.tar" .\usr\lib\grub\x86_64-efi-signed\gcdx64.efi.signed "-o${env:TEMP}" > $null
-    move "${env:TEMP}\gcdx64.efi.signed" "${efi}\EFI\BOOT\grubx64.efi" -force
-    rm "${env:TEMP}\signed.deb"
-    rm "${env:TEMP}\data.tar"
-    # shim64.efi
-    if( $secureBootEnabled ) {
-        (New-Object System.Net.WebClient).DownloadFile($shim_url, "${efi}\EFI\BOOT\shimx64.efi")
+    # Download and install grub files
+    $grub_version='grub-2.04-for-windows'
+    $grub_dir="${global:tunic_dir}\${grub_version}"
+    if ( -not (Test-Path $grub_dir) ) {
+        $web.downloadFile("https://ftp.gnu.org/gnu/grub/${grub_version}.zip", "${grub_dir}.zip")
+        expand-archive "${grub_dir}.zip" -destinationPath "${global:tunic_dir}"
+        rm "${grub_dir}.zip"
     }
+    & "${global:tunic_dir}\${grub_version}\grub-install.exe" --no-nvram --boot-directory=S:\boot --efi-directory=S:\ --target=x86_64-efi > $null
+
+    # Secure Boot shim
+    if( $secureBootEnabled ) {
+        $web.DownloadFile($shim_url, "${efi}\EFI\grub\shimx64.efi")
+    }
+
     # config
     move "$grub_path\grub.cfg" "$grub_path\grub.orig.cfg" -errorAction silentlyContinue
     copy "files\grub.cfg" "$grub_path\."
@@ -407,27 +399,22 @@ function installGrub() {
     }
 
     # Boot Entry
-    #TODO: idempotent
     if( test-path("${global:tunic_dir}\bcd.id") ) {
         $osloader = (get-content "${global:tunic_dir}\bcd.id")
         bcdedit /delete "$osloader" /cleanup /f | out-null
     }
     $osloader = (bcdedit /copy '{bootmgr}' /d ubuntu).replace('The entry was successfully copied to ','').replace('.','')
-    bcdedit /set         "$osloader" device "partition=$efi" | out-null
+    bcdedit /set     "$osloader" device "partition=$efi" | out-null
     if( $secureBootEnabled ) {
-        bcdedit /set         "$osloader" path "\EFI\BOOT\shimx64.efi" | out-null
+        bcdedit /set "$osloader" path "\EFI\grub\shimx64.efi" | out-null
     }
     else {
-        bcdedit /set         "$osloader" path "\EFI\BOOT\grubx64.efi" | out-null
+        bcdedit /set "$osloader" path "\EFI\grub\grubx64.efi" | out-null
     }
-    bcdedit /set         "$osloader" description "Tunic Linux Installer" | out-null
-    bcdedit /deletevalue "$osloader" locale | out-null
-    bcdedit /deletevalue "$osloader" inherit | out-null
-    bcdedit /deletevalue "$osloader" default | out-null
-    bcdedit /deletevalue "$osloader" resumeobject | out-null
-    bcdedit /deletevalue "$osloader" displayorder | out-null
-    bcdedit /deletevalue "$osloader" toolsdisplayorder | out-null
-    bcdedit /deletevalue "$osloader" timeout | out-null
+    bcdedit /set     "$osloader" description "Tunic Linux Installer" | out-null
+    ('locale', 'inherit', 'default', 'resumeobject', 'displayorder', 'toolsdisplayorder', 'timeout') | % {
+        bcdedit /deletevalue "$osloader" $_ | out-null
+    }
     bcdedit /set '{fwbootmgr}' displayorder "$osloader" /addfirst | out-null
     set-content -path "${global:tunic_dir}\bcd.id" -value "$osloader"
 
@@ -506,7 +493,7 @@ function treeMap() {
     $tree_setup= "$($global:tunic_dir)\windirstat-setup.exe"
     $tree_exe= "C:\Program Files (x86)\WinDirStat\windirstat.exe"
     if ( -not (Test-Path "$tree_exe") ) {
-        (New-Object System.Net.WebClient).DownloadFile($tree_dl, $tree_setup)
+        $web.DownloadFile($tree_dl, $tree_setup)
         start-process $tree_setup /S -wait
     }
     start-process "$tree_exe" -wait

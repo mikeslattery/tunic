@@ -81,6 +81,8 @@
 * https://neosmart.net/wiki/bcdedit/
 * https://askubuntu.com/questions/831216/how-can-i-reinstall-grub-to-the-efi-partition
 * https://www.codeproject.com/Articles/833655/Modify-Windows-BCD-using-Powershell
+* https://www.aioboot.com/en/install-grub2-from-windows/
+* https://wiki.archlinux.org/index.php/GRUB/Tips_and_tricks
 
 ### Automated Install
 
