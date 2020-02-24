@@ -165,57 +165,72 @@ function checks() {
           [Security.Principal.WindowsIdentity]::GetCurrent() `
         ).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator) ) {
         die( 'Must be an Administrator to run tunic' )
+        return
     }
 
     if( ! [System.Environment]::Is64BitOperatingSystem ) {
         die( 'Only 64 bit systems supported' )
+        return
+    }
+
+    if( (get-wmiobject -class "Win32_ComputerSystem").totalPhysicalMemory -lt 3.5GB ) {
+        die('4GB or more RAM required.')
+        return
     }
 
     if( [intPtr]::size -eq 4 ) {
         die( 'Tunic cannot be run from 32 bit Powershell' )
+        return
     }
 
     $osversion = [System.Environment]::OSVersion.version
     if( $osversion.major -lt 10 ) {
         # Windows 7=6.1, 8=6.2, 8.1=6.3  Windows 10=10
         die( 'Only Windows 10 supported' )
+        return
     }
 
     if( [System.Environment]::Version.major -lt 3 ) {
         die( 'Powershell 3 or above required' )
+        return
     }
 
     if( (Get-WmiObject Win32_Battery).batteryStatus -eq 1 ) {
         die( 'It is too risky to use Tunic while on battery.' )
+        return
+    }
+
+    Install-Script -name Test-PendingReboot
+    if( (Test-PendingReboot.ps1 -computername localhost).isPendingReboot ) {
+        if( yes('A Windows Update reboot is pending.  You need to reboot and rerun Tunic.  Reboot now?') ) {
+            restart-computer
+        }
+        return
     }
 
     if( (New-Object -ComObject 'Microsoft.Update.Installer').isBusy ) {
         die('A Windows Update is in progress.  Try again later.')
-    }
-
-    $partc = ( get-partition -driveLetter $global:letter )
-    if( (get-disk -number $partc.diskNumber).partitionStyle -eq 'MBR' ) {
-        mbr2gpt /validate /allowfullos > $null 2> $null
-        if( $? ) {
-            if( yes('UEFI required.  Conversion requires BIOS change during boot.  Convert from MBR to UEFI now?') ) {
-                mbr2gpt /convert /allowfullos > $null 2> $null
-                if( $? ) {
-                    restart-computer -force
-                } else {
-                    die('Could not convert to UEFI.')
-                }
-            } else {
-                die('UEFI required.  Tunic can not run.')
-            }
-        } else {
-            die('UEFI required, but system cannot e converted.')
-        }
+        return
     }
 
     $blInfo = Get-Bitlockervolume
     if( $blInfo.ProtectionStatus -eq 'On' ) {
         $recoveryKey = (Get-BitLockerVolume -MountPoint 'C').KeyProtector
         say( "Bitlocker may have issues with dual boot.  Write down your recovery key: $recoveryKey" )
+    }
+
+    $partc = ( get-partition -driveLetter $global:letter )
+    if( (get-disk -number $partc.diskNumber).partitionStyle -eq 'MBR' ) {
+        mbr2gpt /validate /allowfullos > $null 2> $null
+        if( $? ) {
+            if( yes('UEFI required, but system is MBR.  Read web page on how to convert?') ) {
+                openurl('https://www.isumsoft.com/computer/how-to-convert-mbr-to-gpt-partition-no-data-loss.html')
+            }
+            $global:form.close()
+        } else {
+            die('UEFI required, but is not supported by this system.')
+        }
+        return
     }
 }
 
