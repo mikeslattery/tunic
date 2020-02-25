@@ -6,7 +6,7 @@
 
 if( $args[0] -eq 'noop') { exit } # for syntax checking
 
-$ProgressPreference = 'SilentlyContinue'
+$global:ProgressPreference = 'SilentlyContinue'
 
 $global:shim_url = 'https://github.com/pop-os/iso/blob/master/data/efi/shimx64.efi.signed?raw=true'
 $global:grubx64_url = 'http://archive.ubuntu.com/ubuntu/pool/main/g/grub2-signed/grub-efi-amd64-signed_1.93.15+2.02-2ubuntu8.14_amd64.deb'
@@ -113,8 +113,8 @@ function enableSwap() {
     Enable-WindowsErrorReporting
 
     # Enable Swap
-    wmic pagefileset create name="C:\\pagefile.sys"
-    wmic pagefileset where name="C:\\pagefile.sys" set InitialSize=2048,MaximumSize=2048
+    wmic pagefileset create name="${global:letter}:\\pagefile.sys"
+    wmic pagefileset where name="${global:letter}:\\pagefile.sys" set InitialSize=2048,MaximumSize=2048
     wmic computersystem set AutomaticManagedPagefile=True
 
     # Enable Hibernate (but not fast start)
@@ -196,26 +196,25 @@ function checks() {
     }
 
     if( (Get-WmiObject Win32_Battery).batteryStatus -eq 1 ) {
-        die( 'It is too risky to use Tunic while on battery.' )
-        return
+        say( 'It is too risky to use Tunic while on battery.' )
     }
 
-    Install-Script -name Test-PendingReboot
+    #TODO: find lighter way to check for updates
+    install-packageprovider -name NuGet -force
+    install-script -name Test-PendingReboot -force
     if( (Test-PendingReboot.ps1 -computername localhost).isPendingReboot ) {
         if( yes('A Windows Update reboot is pending.  You need to reboot and rerun Tunic.  Reboot now?') ) {
             restart-computer
         }
-        return
     }
 
     if( (New-Object -ComObject 'Microsoft.Update.Installer').isBusy ) {
-        die('A Windows Update is in progress.  Try again later.')
-        return
+        say('A Windows Update is in progress.  You should quit and try again later.')
     }
 
-    $blInfo = Get-Bitlockervolume
-    if( $blInfo.ProtectionStatus -eq 'On' ) {
-        $recoveryKey = (Get-BitLockerVolume -MountPoint 'C').KeyProtector
+    $blInfo = (Get-BitLockerVolume -MountPoint "${global:letter}" -erroraction silentlyContinue)
+    if( $blInfo -and $blInfo.ProtectionStatus -eq 'On' ) {
+        $recoveryKey = $blInfo.KeyProtector
         say( "Bitlocker may have issues with dual boot.  Write down your recovery key: $recoveryKey" )
     }
 
