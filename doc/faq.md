@@ -53,6 +53,6 @@ For more information see [security](security.md).
 
 ### How can I contact the author of Tunic?
 
-* [Enter an issue](https://github.com/mikeslattery/tunic/issues/new) in Github
-* Chat directly [on reddit](https://www.reddit.com/u/funbike).
+* [Enter an issue](https://github.com/mikeslattery/tunic/issues/new) in Github.
+* [Send a message](https://www.reddit.com/message/compose/?to=funbike).
 

@@ -11,7 +11,6 @@ without requiring to boot from external media like a flash drive or making BIOS 
 
 * Validates your system meets Tunic requirements.
 * Asks all questions at beginning  (so you don't have to babysit the install).
-* Offers to convert a MBR disk to UEFI.
 * Offers full disk overwrite or dual boot arrangement.
 * If dual boot, shrink C: volume to make space for Linux.
 * Provides tools to assist with freeing up space for Linux.
@@ -32,6 +31,7 @@ See the [TODO](doc/TODO.md) for ideas for future versions.
 * Single drive hosting the C: volume
 * At least 4 GB RAM
 * At least 15 GB of free disk space
+* UEFI
 * Administrator user permissions
 * Internet access
 * AC Wall Power
@@ -69,6 +69,10 @@ from releases.
 1. Answer questions.
 1. Let it run.  It may take a long time.
 1. Enjoy your new Linux OS!
+
+If you were able to install Linux with Tunic, please
+add a comment to [Success Stores](https://github.com/mikeslattery/tunic/issues/12), 
+or send a message [to the author](https://www.reddit.com/message/compose/?to=funbike).
 
 See the [FAQ](doc/faq.md) if you need further help.
 
