@@ -9,7 +9,6 @@ if( $args[0] -eq 'noop') { exit } # for syntax checking
 $global:ProgressPreference = 'SilentlyContinue'
 
 $global:shim_url = 'https://github.com/pop-os/iso/blob/master/data/efi/shimx64.efi.signed?raw=true'
-$global:grubx64_url = 'http://archive.ubuntu.com/ubuntu/pool/main/g/grub2-signed/grub-efi-amd64-signed_1.93.15+2.02-2ubuntu8.14_amd64.deb'
 
 $global:letter = $env:HOMEDRIVE[0]
 $global:root_dir="${letter}:"

@@ -14,7 +14,7 @@ without requiring to boot from external media like a flash drive or making BIOS 
 * Offers full disk overwrite or dual boot arrangement.
 * If dual boot, shrink C: volume to make space for Linux.
 * Provides tools to assist with freeing up space for Linux.
-* Disables Windows fast boot.
+* Disables Windows fast start.
 * Provides Linux Mint, Ubuntu and most official Ubuntu flavors.
 * Downloads the Linux .iso file for you.
 * Installs Grub with Secure Boot support.
