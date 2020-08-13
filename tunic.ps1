@@ -160,8 +160,8 @@ function openUrl($url) {
 
 # Returns true if Linux can be installed.
 function checks() {
-    if( !([Security.Principal.WindowsPrincipal] `
-          [Security.Principal.WindowsIdentity]::GetCurrent() `
+    if( !(  [Security.Principal.WindowsPrincipal] `
+            [Security.Principal.WindowsIdentity]::GetCurrent() `
         ).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator) ) {
         die( 'Must be an Administrator to run tunic' )
         return
@@ -1154,8 +1154,8 @@ function hideConsole() {
 }
 
 function uninstall() {
-    if( !([Security.Principal.WindowsPrincipal] `
-          [Security.Principal.WindowsIdentity]::GetCurrent() `
+    if( !  ([Security.Principal.WindowsPrincipal] `
+            [Security.Principal.WindowsIdentity]::GetCurrent() `
         ).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator) ) {
         write-host  'Must be an Administrator'
         exit 1

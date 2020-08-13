@@ -3,20 +3,25 @@ root = true
 [*]
 indent_style = space
 insert_final_newline = true
+indent_size = 4
+trim_trailing_whitespace = true
+end_of_line = lf
 
 [*.{cmd,bat}]
 end_of_line = crlf
-indent_size = 4
 
 [*.{ps1,psm1,psd1,nsi}]
 end_of_line = crlf
-indent_size = 4
-trim_trailing_whitespace = true
 
 [*.{ps1xml,props,xml.yaml,yml}]
 indent_size = 2
 
 [*.sh]
-end_of_line = lf
 indent_size = 2
 
+[*.md]
+indent_size = undef
+
+[{LICENSE,garbage.txt}]
+indent_size = undef
+trim_trailing_whitespace = undef

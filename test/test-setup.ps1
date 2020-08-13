@@ -29,7 +29,7 @@ $password='Passw0rd!'
 
 $WindowsUpdatePath = "HKLM:SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate"
 $AutoUpdatePath = "HKLM:SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU"
- 
+
 Remove-Item -Path $WindowsUpdatePath -Recurse -errorAction ignore
 
 New-Item -Path $WindowsUpdatePath
@@ -62,11 +62,11 @@ New-ItemProperty -Path "HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies
 
 # Disable Cortana
 
-$path = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search"     
-IF(!(Test-Path -Path $path)) {  
-    New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows" -Name "Windows Search" 
-}  
-Set-ItemProperty -Path $path -Name "AllowCortana" -Value 1 
+$path = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search"
+IF(!(Test-Path -Path $path)) {
+    New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows" -Name "Windows Search"
+}
+Set-ItemProperty -Path $path -Name "AllowCortana" -Value 1
 New-NetFirewallRule -DisplayName "Block Cortana Web Access" -Direction Outbound -Program "%windir%\systemapps\Microsoft.Windows.Cortana_cw5n1h2txyewy\SearchUI.exe" -Action Block
 
 # Auto Login

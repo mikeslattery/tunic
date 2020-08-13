@@ -16,7 +16,7 @@ class MainWindow(Gtk.Window):
         def __init__(self, title):
             Gtk.Frame.__init__(self)
             self.set_label(title)
-            
+
             self.grid = Gtk.Grid(row_spacing=5, column_spacing=5)
             self.row = 0
 
@@ -36,7 +36,7 @@ class MainWindow(Gtk.Window):
     class ButtonBox(Gtk.FlowBox):
         def __init__(self):
             Gtk.FlowBox.__init__(self)
-            
+
         def field(self, field):
             self.add(field)
             return field
@@ -70,8 +70,8 @@ class MainWindow(Gtk.Window):
 
         box = self.FieldBox('')
         self.distro = box.field('Distro', Gtk.ComboBoxText())
-        self.distro.append('1', 'Ubuntu 18.04')
-        self.distro.append('2', 'Linux Mint 13.3')
+        self.distro.append('1', 'Ubuntu 20.04')
+        self.distro.append('2', 'Linux Mint 19.3')
         self.distro.set_active(0)
         column.add(box)
 
@@ -182,7 +182,7 @@ class MainWindow(Gtk.Window):
         self.username.set_text(system_info['username'])
         self.hostname.set_text(system_info['hostname'])
         self.full_name.set_text(system_info['full_name'])
-            
+
 # OS specific functionality
 class LinuxSystem:
 
@@ -197,9 +197,10 @@ class LinuxSystem:
             'full_name':    pwd.getpwuid( uid ).pw_gecos.split(',')[0],
             'hostname':     platform.node(),
             'memory':       psutil.virtual_memory().total,
-            'timezone':     '/'.join(os.path.realpath('/etc/localtime').split('/')[-2:]),
             'on_battery':   not psutil.sensors_battery().power_plugged,
             'architecture': platform.machine(),
+            # These are the only os-specific iems
+            'timezone':     '/'.join(os.path.realpath('/etc/localtime').split('/')[-2:]),
             'is_efi':       os.path.isdir('/sys/firmware/efi'),
         }
 
@@ -212,7 +213,7 @@ class LinuxSystem:
             'free':      usage.free,
             'available': usage.free,
         }
-    
+
     # Checks for conditions specific to current OS.
     # Throws exception if Tunic not compatible.
     def special_checks(self):
