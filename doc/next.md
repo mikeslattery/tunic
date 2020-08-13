@@ -19,6 +19,9 @@
 * Windows 7 / Python
  - new branch
  - python3, gtk, 32 bit, no choco
+ - python linter
+ - github actions
+ - vim: editorconfig check
  - hello world - show hi/hello.txt
  - deploy with subdirs to windows 7 32 bit
  - arch: unit tests, MVP, mock OS
@@ -43,7 +46,7 @@
 * distros
     $vmlinux = (dir 'D:\' -file -filter '*vmlinu*' -recurse).FullName.toLower() -replace '^\w:','' -replace '\\','/'
     $initrd  = (dir 'D:\' -file -filter '*initrd*' -recurse).FullName.toLower() -replace '^\w:','' -replace '\\','/'
-    
+
     # only work if a single hit.  otherwise use default, even if it doesn't exist
     #$global:data.iso_url = 'ubuntu-18.04.3-desktop-amd64.iso'
     #$global:data.iso_url = 'deepin-15.11-amd64.iso'
@@ -93,7 +96,7 @@
 * Win 7, EFI/MBR, 32/64 bit (hardware) testing
 * reboot-continue (to delete swap)
 * Advanced options
-* icons: os-uninstall, Windows files, 
+* icons: os-uninstall, Windows files,
 * 1.0
 * abort.sh (also before.sh, after.sh)
 * bitlocker
@@ -161,7 +164,7 @@ cards: checks, input, advanced, progress
 * Browse Config files (dir of generated preseed.cfg, grub.cfg, ks.cfg)
 * [ ] Skip shrink partition (clean, disable swap, defrag, reboot-cont)
 * [ ] Skip Ubiquity UI
-* [x] Reboot now 
+* [x] Reboot now
 
 # validation
 * https://stackoverflow.com/questions/4645126/looking-for-regex-code-for-hostname-machine-name-validation
