@@ -140,38 +140,101 @@ golang
 * github actions for builds
 * uac - https://gist.github.com/jerblack/d0eb182cc5a1c1d92d92a4c4fcc416c6
 
-* mvp 0  - just lets you know if system is compatible with Tunic
-  - no GUI
-  - Github actions
-  - validations
-  - 32 bit
-* mvp 1  - CLI to install tunic given a .iso file.  non-interactive.
+pipeline
+* pandoc
+  - github markdown
+  - plantuml
+* makefiles and targets
+  - vagrant to build Windows 7/10 VM
+  - build tunic.exe (x-compile)
+  - test on GHA Windows
+  - test ubiquity on GHA ubuntu
+  - markdown gfm to pandoc
+* testing
+  - GHA ubuntu or linux desktop - headless fyne unit testing
+  - GHA Windows or VB-shell - partial functional testing  (just not reboot)
+  - in-between - change /proc/cmdline reading in ubuiquity as output from previous step's grub.cfg
+  - GHA Ubuntu or docker - partial functional testing - grub-emu, ubiquity, xvfb
+  - not GHA but linux/VB/Windows - functional testing
+
+Specific checks
+* grub2-script-check
+* shellcheck -s ksh grub.cfg
+* override value of /proc/cmdline
+* See if unetbootin distro list updated.  Compile just enough C++ code to generate a config file.
+* mvp 0 - --help --no-run
+
+* MVP 0 - Download and run last powershell version of tunic.exe.  Manual build.
+* Github actions: Windows-based build and test script for Go.  
+* release draft versions after `git push tag` on “develop” branch
+* MVP 1
+  - Download Mint Cinnamon latest.
   - Copy .iso argument to efi
-  - copy grub files onto efi
-  - install grub
-  - reboot
-* disable fastboot
-* secure boot
-* Download Mint Cinnamon latest
-* GUI MVP
-  - single page
-  - read-only fields: disclaimer, progress
-  - buttons: ok, quit/cancel
-* UAC
-* disclaimer checkbox
-* progress page
-* ubuntu and mint flavors pulldown
+  - install grub and reboot.
+* secure boot support.
+* UAC elevate - https://github.com/mozey/run-as-admin
+* disable Windows fastboot.
+* validations  (e.g. UEFI, WIndows 10 64 bit, etc).
+* MVP 2 milestone - Hassle free.  No extra steps by users.  
+  - switch to master branch
+  - start deploying releases (instead of drafts)
+* refactor
+  - Go “best practice” project structure
+  - static checkers
+  - Vagrant
+  - Makefiles
+* GUI - "Are you sure?"  pop-up
+* Single page GUI: ok, quit, progress  (no cancel)  
+* mint and ubuntu flavors pulldown
+* progress %, cancel
+  - Retries.  Continue on failure.  (HEAD, Range)
+* MVP 3 milestone - Nice GUI.  
+* Refactor
+  - Unstrangle.
+  - 32 bit .exe on 64 bit OS
 * preseed basics (locale, TZ, kb)
-* install type
-* free space page w/o utilities
-* user pane
-* auto reboot into linux (if not custom)
-* free space page w/utilities
-* iso list from unetbootin, multibootusb
-* grub cleanup post-install
-* auto release on push to master
-* email me on master build failures
-* auto upate iso list in GHA once a week
+* Install types
+  - install type field and preseed
+  - free space pane w/o utilities
+* user fields pane
+* auto reboot into linux (if no user input required from ubiquity)
+* free space pane w/utilities
+* LUKS.  Password
+* MVP 4 milestone - Feature parity with powershell Tunic
+* Windows Task - in powershell
+  - Delete Tunic's custom grub
+  - Fix missing Grub
+* Win 7, 32 bit, MBR support.
+* Win XP 32 bit support  (64 bit in future)
+  - "Install alongside..." not provided.
+* Testing matrix: Win XP/7/10, 32/64, MBR/EFI, BIOS/GPT
+* More distros and means for download
+  - Embed Grub For Windows
+  - kickstart support
+  - iso list from unetbootin, multibootusb
+  - aria2 or similar, metalink
+* distro filters
+  - 32 Bit
+  - Supports secure boot
+  - Author's choice: Lightweight
+  - Author's choice: Beginner Friendly
+
+
+References
+* https://github.com/anacrolix/torrent
+* aria2 - https://github.com/zyxar/argo
+* https://github.com/golang-standards/project-layout
+* example app - https://github.com/Jacalz/sparta
+* example app - https://github.com/airplayx/gormat
+* iso fs - https://github.com/diskfs/go-diskfs
+* repl - https://stackoverflow.com/questions/8513609/does-go-provide-repl
+
+Research
+* username, computername
+* diskspace `disableSwap(), clean(), defrag()`
+* `checks()`
+
+
 
 
 -----

@@ -7,10 +7,7 @@ indent_size = 4
 trim_trailing_whitespace = true
 end_of_line = lf
 
-[*.{cmd,bat}]
-end_of_line = crlf
-
-[*.{ps1,psm1,psd1,nsi}]
+[*.{cmd,bat,ps1,psm1,psd1,nsi}]
 end_of_line = crlf
 
 [*.{ps1xml,props,xml.yaml,yml}]
@@ -22,6 +19,10 @@ indent_size = 2
 [*.md]
 indent_size = undef
 
+[*.go]
+indent_style = tab
+
 [{LICENSE,garbage.txt}]
 indent_size = undef
 trim_trailing_whitespace = undef
+
