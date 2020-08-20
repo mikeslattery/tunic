@@ -1,6 +1,6 @@
 include test.mk
 
-default: unittest
+default: utest
 
 tunic.exe: main.go
 	GOOS=windows GOARCH=amd64 go build -o tunic.exe

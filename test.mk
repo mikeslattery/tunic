@@ -6,7 +6,7 @@ download-vm10:
 	rm MSEdge.Win10.VirtualBox.zip
 	#TODO: create 'MSEdge - Win10.ova'
 
-unittest: main.go
+utest: main.go
 	go test
 
 loop:

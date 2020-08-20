@@ -21,7 +21,7 @@ func Download() error {
     }
     defer resp.Body.Close()
 
-    out, err := os.Create("tunic.exe")
+    out, err := os.Create("tunic024.exe")
     if err != nil {
         return err
     }
@@ -32,7 +32,7 @@ func Download() error {
 }
 
 func Run() error {
-    cmd := exec.Command("tunic.exe")
+    cmd := exec.Command("tunic024.exe")
     err := cmd.Run()
     return err
 }
