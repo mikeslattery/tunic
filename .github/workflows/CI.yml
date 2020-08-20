@@ -4,11 +4,10 @@ on: [push, pull_request]
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: windows-2019
     steps:
     - name: Checkout
       uses: actions/checkout@v2
-    - name: Run a one-line script
-      run: echo Hello, world!
     - name: Test
       run: make utest
+
