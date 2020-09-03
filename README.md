@@ -71,7 +71,7 @@ from releases.
 1. Enjoy your new Linux OS!
 
 If you were able to install Linux with Tunic, please
-add a comment to [Success Stores](https://github.com/mikeslattery/tunic/issues/12),
+add a comment to [Success Stories](https://github.com/mikeslattery/tunic/issues/12),
 or send a message [to the author](https://www.reddit.com/message/compose/?to=funbike).
 
 See the [FAQ](doc/faq.md) if you need further help.
